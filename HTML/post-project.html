@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebFund — Đăng dự án mới</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../CSS/post-project.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body data-bs-theme="dark">
+
+  <nav class="navbar navbar-expand-md sticky-top border-bottom" id="siteNavbar">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="main.html">&lt;WebFund/&gt;</a>
+      <button class="navbar-toggler border-0 order-md-last" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav me-auto mb-2 mb-md-0">
+          <li class="nav-item"><a href="main.html#feed" class="nav-link">Khám phá dự án</a></li>
+          <li class="nav-item"><a href="main.html#how" class="nav-link">Cách hoạt động</a></li>
+        </ul>
+        <div class="d-flex align-items-center gap-2">
+          <div id="authButtons" class="align-items-center gap-2" style="display:none">
+            <a href="auth.html" class="btn btn-outline-secondary btn-sm">Đăng nhập</a>
+            <a href="auth.html" class="btn btn-primary btn-sm">Đăng ký</a>
+          </div>
+          <div id="userMenu" class="dropdown" style="display:none">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" id="userDropdown"></button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="main.html">Trang chủ</a></li>
+              <li><a class="dropdown-item" href="post-project.html" id="createProjectLink">+ Dự án mới</a></li>
+              <li><a class="dropdown-item" href="my-projects.html" id="myProjectsLink" style="display:none">Dự án của tôi</a></li>
+              <li><a class="dropdown-item" href="portfolio.html" id="portfolioLink" style="display:none">Portfolio</a></li>
+              <li><a class="dropdown-item" href="admin.html" id="adminLink" style="display:none"><i class="bi bi-shield-lock"></i> Admin</a></li>
+              <li><a class="dropdown-item" href="settings.html"><i class="bi bi-gear"></i> Cài đặt</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><button class="dropdown-item" id="logoutBtn">Đăng xuất</button></li>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="post-page-bg">
+    <div class="container py-4">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+          <div class="post-hero d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+            <div>
+              <div class="terminal-dock mb-2">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+                <span class="ms-1">webfund -- post-project</span>
+              </div>
+              <h2 class="fw-bold mb-1">Đăng dự án mới</h2>
+              <p class="text-muted small mb-0">Điền thông tin chi tiết để thu hút nhà đầu tư và cộng đồng.</p>
+            </div>
+            <a href="main.html" class="btn btn-outline-secondary btn-sm">← Quay lại</a>
+          </div>
+
+          <div class="form-card" id="formCard">
+
+            <!-- Step Navigation -->
+            <div class="step-nav" id="stepNav">
+              <button class="step-pill active" data-step="1">
+                <span class="step-num">1</span> Cơ bản
+              </button>
+              <button class="step-pill" data-step="2">
+                <span class="step-num">2</span> Hình ảnh
+              </button>
+              <button class="step-pill" data-step="3">
+                <span class="step-num">3</span> Tài chính
+              </button>
+              <button class="step-pill" data-step="4">
+                <span class="step-num">4</span> Liên hệ
+              </button>
+            </div>
+
+            <form id="projectForm" novalidate>
+
+              <!-- ===== STEP 1: Basic Info ===== -->
+              <div class="form-section active" data-step="1">
+                <p class="form-section-title">Thông tin cơ bản</p>
+                <p class="form-section-desc">Giới thiệu ngắn gọn về dự án của bạn.</p>
+
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Tên dự án <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="pName" placeholder="VD: ShopVibe — Nền tảng thương mại..." required maxlength="100">
+                    <div class="char-counter"><span id="nameCount">0</span>/100</div>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Mô tả ngắn <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="pTagline" placeholder="Một câu giới thiệu dự án..." required maxlength="150">
+                    <div class="char-counter"><span id="taglineCount">0</span>/150</div>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Mô tả chi tiết <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="pDesc" rows="6" required maxlength="2000" placeholder="Giải thích rõ: dự án giải quyết vấn đề gì, tại sao nó quan trọng, giải pháp của bạn là gì..."></textarea>
+                    <div class="char-counter"><span id="descCount">0</span>/2000</div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Danh mục <span class="text-danger">*</span></label>
+                    <select class="form-select" id="pCategory">
+                      <option value="ecommerce">E-commerce</option>
+                      <option value="edtech">EdTech</option>
+                      <option value="fintech">FinTech</option>
+                      <option value="ai">AI / Machine Learning</option>
+                      <option value="saas">SaaS</option>
+                      <option value="content">Blog / Nội dung</option>
+                      <option value="healthtech">HealthTech</option>
+                      <option value="proptech">PropTech</option>
+                      <option value="traveltech">TravelTech</option>
+                      <option value="other">Khác</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Giai đoạn <span class="text-danger">*</span></label>
+                    <select class="form-select" id="pStage">
+                      <option value="idea">Idea — Mới chỉ là ý tưởng</option>
+                      <option value="mvp" selected>MVP — Có prototype/sản phẩm thử nghiệm</option>
+                      <option value="growth">Growth — Đang tăng trưởng người dùng</option>
+                      <option value="scale">Scale — Cần vốn để mở rộng</option>
+                    </select>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Tags</label>
+                    <div class="tag-container" id="tagContainer">
+                      <input type="text" class="tag-input" id="tagInput" placeholder="Nhập tag rồi nhấn Enter...">
+                    </div>
+                    <small class="text-muted">Nhấn Enter hoặc dấu phẩy để thêm tag. VD: React, Node.js, Firebase</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== STEP 2: Media ===== -->
+              <div class="form-section" data-step="2">
+                <p class="form-section-title">Hình ảnh dự án</p>
+                <p class="form-section-desc">Ảnh bìa giúp dự án nổi bật hơn trong feed. Ảnh gallery giới thiệu chi tiết sản phẩm.</p>
+
+                <div class="row g-4">
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Ảnh bìa <span class="text-danger">*</span></label>
+                    <div class="upload-zone" id="coverUploadZone">
+                      <input type="file" id="coverInput" accept="image/*">
+                      <div class="upload-icon"><i class="bi bi-image"></i></div>
+                      <div class="upload-text">Kéo thả ảnh bìa vào đây hoặc nhấn để chọn</div>
+                      <div class="upload-hint">PNG, JPG, WebP · Tối đa 5MB · 1200x630px khuyến nghị</div>
+                    </div>
+                    <div class="upload-progress" id="coverProgress">
+                      <div class="progress"><div class="progress-bar" style="width:0%"></div></div>
+                      <div class="upload-progress-text">Đang tải lên...</div>
+                    </div>
+                    <input type="hidden" id="pCoverUrl">
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Ảnh gallery</label>
+                    <small class="text-muted d-block mb-2">Tối đa 6 ảnh. Giúp nhà đầu tư thấy rõ sản phẩm của bạn.</small>
+                    <div class="gallery-grid" id="galleryGrid">
+                      <label class="gallery-add" id="galleryAddBtn">
+                        <span class="plus-icon">+</span>
+                        <span>Thêm ảnh</span>
+                        <input type="file" id="galleryInput" accept="image/*" multiple hidden>
+                      </label>
+                    </div>
+                    <div class="upload-progress" id="galleryProgress">
+                      <div class="progress"><div class="progress-bar" style="width:0%"></div></div>
+                      <div class="upload-progress-text">Đang tải ảnh lên...</div>
+                    </div>
+                    <input type="hidden" id="pGalleryUrls">
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== STEP 3: Funding ===== -->
+              <div class="form-section" data-step="3">
+                <p class="form-section-title">Thông tin tài chính</p>
+                <p class="form-section-desc">Mục tiêu gọi vốn và lộ trình sử dụng vốn minh bạch giúp nhà đầu tư tin tưởng.</p>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Mục tiêu gọi vốn (VNĐ) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="pGoal" min="1000000" step="100000" required placeholder="VD: 50000000">
+                    <small class="text-muted">Tối thiểu 1.000.000đ</small>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Số ngày còn lại</label>
+                    <input type="number" class="form-control" id="pDaysLeft" min="1" max="90" value="30">
+                    <small class="text-muted">Tối đa 90 ngày</small>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Lộ trình sử dụng vốn</label>
+                    <textarea class="form-control" id="pUseOfFunds" rows="3" maxlength="500" placeholder="VD: 40% phát triển sản phẩm, 30% marketing, 20% vận hành, 10% dự phòng"></textarea>
+                    <div class="char-counter"><span id="fundsCount">0</span>/500</div>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Cột mốc chính</label>
+                    <div id="milestones">
+                      <div class="d-flex gap-2 mb-2 align-items-center milestone-row">
+                        <input type="text" class="form-control form-control-sm" placeholder="VD: Hoàn thành MVP" style="flex:2">
+                        <input type="date" class="form-control form-control-sm" style="flex:1">
+                        <button type="button" class="btn btn-sm btn-outline-danger border-0 milestone-remove" title="Xóa"><i class="bi bi-x-lg"></i></button>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="addMilestoneBtn">+ Thêm cột mốc</button>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Chiến lược gọi vốn</label>
+                    <div class="row g-2">
+                      <div class="col-sm-4">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="stratCrowdfund" checked>
+                          <label class="form-check-label small" for="stratCrowdfund">Gọi vốn cộng đồng</label>
+                        </div>
+                      </div>
+                      <div class="col-sm-4">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="stratAngel">
+                          <label class="form-check-label small" for="stratAngel">Nhà đầu tư thiên thần</label>
+                        </div>
+                      </div>
+                      <div class="col-sm-4">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="stratSkill">
+                          <label class="form-check-label small" for="stratSkill">Đổi kỹ năng lấy cổ phần</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== STEP 4: Contact ===== -->
+              <div class="form-section" data-step="4">
+                <p class="form-section-title">Thông tin liên hệ & mạng xã hội</p>
+                <p class="form-section-desc">Giúp nhà đầu tư kết nối với bạn và tìm hiểu thêm về dự án.</p>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Website dự án</label>
+                    <input type="url" class="form-control" id="pUrl" placeholder="https://example.vn">
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Email liên hệ <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="pEmail" required placeholder="hello@example.vn">
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Đội ngũ sáng lập</label>
+                    <textarea class="form-control" id="pTeam" rows="2" maxlength="500" placeholder="VD: Nguyễn Văn A — CEO (5 năm kinh nghiệm FPT), Trần Thị B — CTO (ex-Shopee)"></textarea>
+                    <div class="char-counter"><span id="teamCount">0</span>/500</div>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold">Liên kết mạng xã hội</label>
+                    <div class="row g-2">
+                      <div class="col-md-6">
+                        <div class="input-group input-group-sm">
+                          <span class="input-group-text border-end-0">Facebook</span>
+                          <input type="url" class="form-control border-start-0" id="pFacebook" placeholder="https://facebook.com/...">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="input-group input-group-sm">
+                          <span class="input-group-text border-end-0">LinkedIn</span>
+                          <input type="url" class="form-control border-start-0" id="pLinkedin" placeholder="https://linkedin.com/in/...">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="input-group input-group-sm">
+                          <span class="input-group-text border-end-0">Twitter / X</span>
+                          <input type="url" class="form-control border-start-0" id="pTwitter" placeholder="https://x.com/...">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="input-group input-group-sm">
+                          <span class="input-group-text border-end-0">GitHub</span>
+                          <input type="url" class="form-control border-start-0" id="pGithub" placeholder="https://github.com/...">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===== STEP 5: Submit / Success ===== -->
+              <div class="form-section" data-step="5">
+                <div class="success-state" id="successState" hidden>
+                  <div class="success-icon"><i class="bi bi-check-lg"></i></div>
+                  <h3>Đăng dự án thành công!</h3>
+                  <p>Dự án của bạn đã được đăng lên WebFund. Nhà đầu tư có thể thấy dự án ngay trên trang chủ.</p>
+                  <div class="d-flex gap-2 justify-content-center mt-4">
+                    <a href="main.html" class="btn btn-primary">Xem trên trang chủ</a>
+                    <button type="button" class="btn btn-outline-secondary" id="postAnotherBtn">Đăng dự án khác</button>
+                  </div>
+                </div>
+              </div>
+
+              <p class="text-danger small mt-2" id="projectError" hidden></p>
+
+              <!-- Navigation Buttons -->
+              <div class="nav-buttons" id="navButtons">
+                <button type="button" class="btn btn-outline-secondary" id="prevBtn" style="display:none">← Trước</button>
+                <button type="button" class="btn btn-primary ms-auto" id="nextBtn">Tiếp theo →</button>
+                <button type="submit" class="btn btn-primary ms-auto" id="submitBtn" style="display:none">
+                  <span id="submitText">Đăng dự án</span>
+                  <span id="submitSpinner" class="spinner-border spinner-border-sm ms-1" style="display:none"></span>
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="error-toast" id="errorToast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="../JS/theme.js"></script>
+  <script src="../JS/firebase-config.js"></script>
+  <script src="../JS/post-project.js"></script>
+</body>
+</html>

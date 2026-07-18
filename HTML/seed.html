@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed Data — WebFund</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+body { font-family: 'Inter', system-ui, sans-serif; background: #0c0e1a; color: #c8cde0; min-height: 100vh; }
+.container { max-width: 700px; padding: 3rem 1rem; }
+h1 { font-weight: 700; margin-bottom: .5rem; }
+.log { background: #1e2440; border: 1px solid #2a3155; border-radius: 10px; padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: .8rem; max-height: 400px; overflow-y: auto; margin-top: 1.5rem; }
+.log .ok { color: #27c93f; }
+.log .err { color: #ff5f56; }
+.log .info { color: #8892b0; }
+#seedBtn:disabled { opacity: .6; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1><i class="bi bi-database"></i> Seed Demo Data</h1>
+  <p class="text-muted">Thêm 12 dự án demo vào Firestore. Mỗi dự án có ảnh bìa mẫu từ picsum.photos.</p>
+
+  <div class="d-flex gap-2 mt-3">
+    <button class="btn btn-primary" id="seedBtn"><i class="bi bi-play-fill"></i> Bắt đầu seed</button>
+    <button class="btn btn-outline-danger" id="clearBtn" disabled><i class="bi bi-trash"></i> Xóa dữ liệu seed</button>
+  </div>
+
+  <div class="log" id="log"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCLUSgBRQH4aTK5rf6Pj8FUKW35wzgNrqI",
+  authDomain: "web-fund-139cb.firebaseapp.com",
+  projectId: "web-fund-139cb",
+  storageBucket: "web-fund-139cb.firebasestorage.app",
+  messagingSenderId: "359996958595",
+  appId: "1:359996958595:web:f812ddc52346aa833e78b6"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const logEl = document.getElementById('log');
+function log(msg, cls = 'info') {
+  logEl.innerHTML += `<div class="${cls}">${msg}</div>`;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+const demoProjects = [
+  { name: "ShopVibe", tagline: "Nền tảng thương mại xã hội cho Gen Z", desc: "ShopVibe kết hợp mạng xã hội và mua sắm, cho phép người dùng tạo cửa hàng mini ngay trên_profile. Với AI gợi ý sản phẩm và hệ thống đánh giá minh bạch, ShopVibe giúp người bán tiếp cận khách hàng mục tiêu một cách tự nhiên nhất.", category: "ecommerce", stage: "mvp", goal: 150000000, raised: 45000000, daysLeft: 25, tags: ["React", "Node.js", "AI"], strategies: ["crowdfund", "angel"] },
+  { name: "CodeMentor AI", tagline: "AI tutor cá nhân hóa cho lập trình viên", desc: "CodeMentor AI phân tích code của bạn, tìm lỗi và đề xuất cải thiện theo thời gian thực. Hỗ trợ 20+ ngôn ngữ, tích hợp VS Code, và có hệ thống bài tập cá nhân hóa dựa trên điểm yếu của từng người dùng.", category: "edtech", stage: "growth", goal: 200000000, raised: 160000000, daysLeft: 12, tags: ["AI", "Python", "VS Code"], strategies: ["crowdfund"] },
+  { name: "FinTrack", tagline: "Quản lý tài chính cá nhân thông minh", desc: "FinTrack tự động phân loại giao dịch, dự báo chi tiêu và gợi ý tiết kiệm. Kết nối trực tiếp với ngân hàng qua API, hỗ trợ đa tiền tệ và báo cáo trực quan.", category: "fintech", stage: "mvp", goal: 80000000, raised: 32000000, daysLeft: 30, tags: ["Firebase", "Chart.js", "Banking API"], strategies: ["crowdfund", "skill"] },
+  { name: "LearnViet", tagline: "Platform học tiếng Việt cho người nước ngoài", desc: "LearnViet sử dụng AI nhận dạng giọng nói để luyện phát âm, hệ thống bài học gamification và nội dung văn hóa bản địa. Phục vụ cộng đồng 500K+ expats tại Việt Nam.", category: "edtech", stage: "idea", goal: 50000000, raised: 8000000, daysLeft: 45, tags: ["AI", "Speech Recognition", "i18n"], strategies: ["crowdfund", "angel"] },
+  { name: "HealthBuddy", tagline: "Ứng dụng theo dõi sức khỏe tinh thần", desc: "HealthBuddy giúp người dùng theo dõi tâm trạng, journaling hàng ngày và kết nối với chuyên gia tâm lý. Với AI phân tích cảm xúc và gợi ý bài tập thở, ứng dụng hướng đến giảm stress cho Gen Z.", category: "healthtech", stage: "mvp", goal: 120000000, raised: 72000000, daysLeft: 18, tags: ["React Native", "AI", "Mental Health"], strategies: ["crowdfund"] },
+  { name: "PropEasy", tagline: "Mua bán bất động sản minh bạch", desc: "PropEasy cung cấp dữ liệu giá đất real-time, đánh giá tiềm năng khu vực bằng AI và quy trình pháp lý minh bạch. Giúp người mua ra quyết định informed hơn.", category: "proptech", stage: "idea", goal: 300000000, raised: 45000000, daysLeft: 60, tags: ["GIS", "AI", "Data Analytics"], strategies: ["angel", "crowdfund"] },
+  { name: "ContentFlow", tagline: "CMS headless cho blogger Việt", desc: "ContentFlow là nền tảng viết blog tối ưu SEO, tích hợp AI gợi ý tiêu đề và nội dung. Hỗ trợ xuất bản đa nền tảng, phân tích reader engagement và monetization.", category: "content", stage: "mvp", goal: 40000000, raised: 28000000, daysLeft: 22, tags: ["Next.js", "MDX", "SEO"], strategies: ["crowdfund", "skill"] },
+  { name: "TripLocal", tagline: "Đặt tour trải nghiệm từ người dân bản địa", desc: "TripLocal kết nối du khách với người dân địa phương để trải nghiệm văn hóa đích thực. Từ lớp nấu phở ở Hà Nội đến trekking cùng người H'mông ở Hà Giang.", category: "traveltech", stage: "growth", goal: 100000000, raised: 85000000, daysLeft: 8, tags: ["Marketplace", "Mobile", "i18n"], strategies: ["crowdfund", "angel"] },
+  { name: "SaaSDesk", tagline: "Help desk SaaS cho startup Việt", desc: "SaaSDesk cung cấp hệ thống ticketing, live chat và knowledge base giá rẻ cho startup. Tích hợp Slack, Discord và Zalo, với AI phân loại ticket tự động.", category: "saas", stage: "mvp", goal: 60000000, raised: 18000000, daysLeft: 35, tags: ["SaaS", "AI", "API"], strategies: ["crowdfund", "skill"] },
+  { name: "GreenFood", tagline: "Marketplace thực phẩm hữu cơ địa phương", desc: "GreenFood kết nối nông dân hữu cơ với người tiêu dùng城市. Đảm bảo nguồn gốc minh bạch qua blockchain, giao hàng trong 2 giờ.", category: "ecommerce", stage: "idea", goal: 70000000, raised: 5000000, daysLeft: 50, tags: ["Blockchain", "Marketplace", "Logistics"], strategies: ["crowdfund"] },
+  { name: "AIRecruit", tagline: "Tuyển dụng thông minh với AI matching", desc: "AIRecruit phân tích CV, đánh giá kỹ năng qua bài test thực tế và gợi ý ứng viên phù hợp cho employer. Giảm 70% thời gian tuyển dụng.", category: "saas", stage: "growth", goal: 180000000, raised: 135000000, daysLeft: 15, tags: ["AI", "NLP", "HR Tech"], strategies: ["angel", "crowdfund"] },
+  { name: "SkillSwap", tagline: "Đổi kỹ năng lấy kỹ năng, không cần tiền", desc: "SkillSwap là nền tảng peer-to-peer nơi bạn dạy thứ mình giỏi và học thứ mình yếu. Thiết kế đổi lấy code, tiếng Anh đổi lấy marketing. Không tiền, chỉ giá trị.", category: "edtech", stage: "mvp", goal: 25000000, raised: 20000000, daysLeft: 10, tags: ["Community", "Matching", "Peer-to-Peer"], strategies: ["crowdfund", "skill"] }
+];
+
+const seedTags = ["demo", "webfund-demo"];
+
+document.getElementById('seedBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('seedBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang seed...';
+  log('Bắt đầu seed...', 'info');
+
+  for (let i = 0; i < demoProjects.length; i++) {
+    const p = demoProjects[i];
+    const coverId = 100 + i;
+    const coverImage = `https://picsum.photos/seed/webfund${coverId}/1200/630`;
+    const gallery = [
+      `https://picsum.photos/seed/g${coverId}a/800/600`,
+      `https://picsum.photos/seed/g${coverId}b/800/600`
+    ];
+    const daysAgo = Math.floor(Math.random() * 14);
+    const createdAt = new Date(Date.now() - daysAgo * 86400000);
+
+    const doc = {
+      ...p,
+      coverImage,
+      gallery,
+      url: '',
+      email: `founder@${p.name.toLowerCase()}.vn`,
+      team: `${p.name} Team — 3 thành viên`,
+      useOfFunds: '40% phát triển sản phẩm, 30% marketing, 20% vận hành, 10% dự phòng',
+      socialLinks: null,
+      milestones: [
+        { title: 'Hoàn thành MVP', date: '2026-09-01' },
+        { title: 'Ra mắt beta', date: '2026-11-01' },
+        { title: 'Đạt 1000 users', date: '2027-01-01' }
+      ],
+      tags: [...p.tags, ...seedTags],
+      userId: 'seed-demo',
+      userName: `${p.name} Founder`,
+      createdAt: createdAt
+    };
+
+    try {
+      await db.collection('projects').add(doc);
+      log(`✓ [${i + 1}/${demoProjects.length}] ${p.name}`, 'ok');
+    } catch (e) {
+      log(`✗ [${i + 1}/${demoProjects.length}] ${p.name} — ${e.message}`, 'err');
+    }
+
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  log('--- Seed hoàn tất! ---', 'ok');
+  btn.innerHTML = '<i class="bi bi-check-lg"></i> Xong!';
+  document.getElementById('clearBtn').disabled = false;
+});
+
+document.getElementById('clearBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('clearBtn');
+  btn.disabled = true;
+  log('Đang xóa dữ liệu seed...', 'info');
+
+  try {
+    const snap = await db.collection('projects').where('userId', '==', 'seed-demo').get();
+    const batch = db.batch();
+    snap.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    log(`✓ Đã xóa ${snap.size} dự án seed`, 'ok');
+  } catch (e) {
+    log(`✗ Lỗi: ${e.message}`, 'err');
+  }
+
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>
