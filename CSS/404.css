@@ -1,0 +1,33 @@
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+.terminal-bar {
+  background: var(--bs-body-bg);
+  border-color: var(--bs-border-color) !important;
+}
+
+.error-card {
+  background: var(--bs-body-bg);
+  border-color: var(--bs-border-color) !important;
+}
+
+.error-code {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 6rem;
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+[data-bs-theme="light"] .error-card {
+  background: #ffffff;
+}
+
+[data-bs-theme="light"] .terminal-bar {
+  background: #f8f9fa;
+}

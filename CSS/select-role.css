@@ -1,0 +1,92 @@
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.role-bg {
+  background: linear-gradient(135deg, #0c0e1a 0%, #141829 40%, #1a1f33 100%);
+  position: relative;
+}
+.role-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 20% 50%, rgba(13, 110, 253, 0.06) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 50%, rgba(13, 110, 253, 0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+[data-bs-theme="light"] .role-bg {
+  background: linear-gradient(135deg, #f0f2ff 0%, #f8f9fc 50%, #eef0f8 100%);
+}
+[data-bs-theme="light"] .role-bg::before {
+  background: radial-gradient(ellipse at 20% 50%, rgba(13, 110, 253, 0.04) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 50%, rgba(13, 110, 253, 0.03) 0%, transparent 60%);
+}
+
+.role-terminal {
+  background-color: #1a1f33;
+  border-color: #2a3155;
+}
+[data-bs-theme="light"] .role-terminal {
+  background-color: #eef0f8;
+  border-color: #dce0ec;
+}
+
+.role-card {
+  background-color: #1e2440;
+}
+[data-bs-theme="light"] .role-card {
+  background-color: #fff;
+}
+
+.role-option {
+  flex: 1;
+  border: 2px solid #2a3155;
+  border-radius: 12px;
+  background: transparent;
+  padding: 1.5rem 1rem;
+  cursor: pointer;
+  transition: all .25s ease;
+  text-align: center;
+  color: inherit;
+}
+.role-option:hover {
+  border-color: var(--bs-primary);
+  background: rgba(13, 110, 253, .06);
+  transform: translateY(-2px);
+}
+.role-option.selected {
+  border-color: var(--bs-primary);
+  background: rgba(13, 110, 253, .12);
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, .2);
+}
+
+[data-bs-theme="light"] .role-option {
+  border-color: #dce1ea;
+}
+[data-bs-theme="light"] .role-option:hover {
+  border-color: var(--bs-primary);
+  background: rgba(13, 110, 253, .04);
+}
+[data-bs-theme="light"] .role-option.selected {
+  background: rgba(13, 110, 253, .08);
+}
+
+.role-icon {
+  font-size: 2rem;
+  margin-bottom: .5rem;
+  line-height: 1;
+}
+.role-title {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: .35rem;
+}
+.role-desc {
+  font-size: .78rem;
+  color: #8892b0;
+  line-height: 1.4;
+}
+[data-bs-theme="light"] .role-desc {
+  color: #5a6178;
+}

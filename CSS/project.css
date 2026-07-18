@@ -1,0 +1,161 @@
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  transition: background-color .25s ease, color .25s ease;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-brand {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.bg-light { background-color: #f8f9fc !important; }
+
+[data-bs-theme="dark"] .bg-light { background-color: #161b2b !important; }
+[data-bs-theme="dark"] .bg-white { background-color: #1a1f33 !important; }
+[data-bs-theme="dark"] .card { background-color: #1e2440; border-color: #2a3155 !important; }
+[data-bs-theme="dark"] .navbar { background-color: #12172e !important; }
+[data-bs-theme="dark"] .navbar .nav-link { color: #8892b0; }
+[data-bs-theme="dark"] .navbar .nav-link:hover { color: #c8cde0; }
+[data-bs-theme="dark"] .border { border-color: #2a3155 !important; }
+[data-bs-theme="dark"] .text-muted { color: #8892b0 !important; }
+[data-bs-theme="dark"] .btn-outline-secondary { border-color: #2a3155; color: #c8cde0; }
+[data-bs-theme="dark"] .btn-outline-secondary:hover { background: #2a3155; border-color: #4a5580; color: #fff; }
+[data-bs-theme="dark"] .dropdown-menu { background-color: #1e2440; border-color: #2a3155; }
+[data-bs-theme="dark"] .dropdown-item { color: #c8cde0; }
+[data-bs-theme="dark"] .dropdown-item:hover { background-color: #2a3155; color: #fff; }
+
+/* ── Page ── */
+.project-page-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0c0e1a 0%, #1a1f33 50%, #161b2b 100%);
+}
+[data-bs-theme="light"] .project-page-bg {
+  background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 50%, #f0f2f8 100%);
+}
+
+/* ── Cover ── */
+.project-cover-wrapper {
+  border-radius: 16px;
+  overflow: hidden;
+  max-height: 420px;
+}
+.project-cover {
+  width: 100%;
+  height: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Main Card ── */
+.project-main-card {
+  background: #1e2440;
+  border: 1px solid #2a3155;
+  border-radius: 16px;
+  padding: 2rem;
+}
+[data-bs-theme="light"] .project-main-card {
+  background: #fff;
+  border-color: #dce1ea;
+}
+
+.project-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: .35rem;
+}
+.project-tagline {
+  color: #8892b0;
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+}
+[data-bs-theme="light"] .project-tagline { color: #5a6178; }
+
+/* ── Sections ── */
+.project-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #2a3155;
+}
+[data-bs-theme="light"] .project-section { border-top-color: #dce1ea; }
+
+.project-section-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: .75rem;
+}
+.project-desc {
+  color: #c8cde0;
+  font-size: .92rem;
+  line-height: 1.7;
+}
+[data-bs-theme="light"] .project-desc { color: #3a3f52; }
+
+/* ── Gallery ── */
+.project-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: .75rem;
+}
+.gallery-img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #2a3155;
+  cursor: pointer;
+  transition: transform .2s;
+}
+.gallery-img:hover { transform: scale(1.02); }
+[data-bs-theme="light"] .gallery-img { border-color: #dce1ea; }
+
+/* ── Timeline ── */
+.project-timeline {
+  position: relative;
+  padding-left: 1.5rem;
+}
+.timeline-item {
+  position: relative;
+  padding-bottom: 1.25rem;
+}
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-dot {
+  position: absolute;
+  left: -1.5rem;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bs-primary);
+  border: 2px solid #1e2440;
+}
+[data-bs-theme="light"] .timeline-dot { border-color: #fff; }
+
+/* ── Sidebar ── */
+.project-sidebar-card {
+  background: #1e2440;
+  border: 1px solid #2a3155;
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+[data-bs-theme="light"] .project-sidebar-card {
+  background: #fff;
+  border-color: #dce1ea;
+}
+
+.creator-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(13, 110, 253, .15);
+  color: var(--bs-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.project-sidebar-card .progress { background: #2a3155; }
+[data-bs-theme="light"] .project-sidebar-card .progress { background: #e9ecf4; }
