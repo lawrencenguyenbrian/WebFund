@@ -142,10 +142,10 @@ function renderPledges() {
         <td>
           ${p.status === 'pending' ? `
             <div class="d-flex gap-1">
-              <button class="btn btn-sm btn-success" onclick="confirmPledge('${p.id}')" title="Xác nhận">
+              <button class="btn btn-sm btn-success" onclick="confirmPledge('${p.id}', this)" title="Xác nhận">
                 <i class="bi bi-check-lg"></i>
               </button>
-              <button class="btn btn-sm btn-danger" onclick="rejectPledge('${p.id}')" title="Từ chối">
+              <button class="btn btn-sm btn-danger" onclick="rejectPledge('${p.id}', this)" title="Từ chối">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
@@ -156,29 +156,40 @@ function renderPledges() {
   }).join('');
 }
 
-async function confirmPledge(id) {
+async function confirmPledge(id, btn) {
+  if (btn) btn.disabled = true;
   const pledge = allPledges.find(p => p.id === id);
   if (!pledge) return;
 
   try {
-    await db.collection('pledges').doc(id).update({ status: 'confirmed' });
+    await db.runTransaction(async (tx) => {
+      const pledgeRef = db.collection('pledges').doc(id);
+      const pledgeSnap = await tx.get(pledgeRef);
+      if (!pledgeSnap.exists) throw new Error('Pledge không tồn tại');
 
-    if (pledge.amount && pledge.projectId) {
-      const projRef = db.collection('projects').doc(pledge.projectId);
-      await projRef.update({
-        raised: firebase.firestore.FieldValue.increment(pledge.amount)
-      });
-    }
+      const data = pledgeSnap.data();
+      if (data.status !== 'pending') throw new Error('Pledge đã được xử lý trước đó');
+
+      tx.update(pledgeRef, { status: 'confirmed' });
+
+      if (data.amount && data.projectId) {
+        tx.update(db.collection('projects').doc(data.projectId), {
+          raised: firebase.firestore.FieldValue.increment(data.amount)
+        });
+      }
+    });
 
     pledge.status = 'confirmed';
     renderPledges();
     showToast('Đã xác nhận pledge');
   } catch (e) {
+    if (btn) btn.disabled = false;
     showToast('Lỗi: ' + e.message);
   }
 }
 
-async function rejectPledge(id) {
+async function rejectPledge(id, btn) {
+  if (btn) btn.disabled = true;
   try {
     await db.collection('pledges').doc(id).update({ status: 'rejected' });
     const pledge = allPledges.find(p => p.id === id);
@@ -186,6 +197,7 @@ async function rejectPledge(id) {
     renderPledges();
     showToast('Đã từ chối pledge');
   } catch (e) {
+    if (btn) btn.disabled = false;
     showToast('Lỗi: ' + e.message);
   }
 }

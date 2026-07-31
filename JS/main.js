@@ -150,7 +150,7 @@ function renderCard(p) {
   const pct = Math.min(Math.round((p.raised / p.goal) * 100), 100);
   const stageLabel = { idea: 'Idea', mvp: 'MVP', growth: 'Growth', scale: 'Scale' }[p.stage];
   const stageClass = { idea: 'bg-warning text-dark', mvp: 'bg-primary text-white', growth: 'bg-info text-dark', scale: 'bg-info text-dark' }[p.stage];
-  const daysText = p.daysLeft === 0 ? 'Đã đủ vốn' : `Còn ${p.daysLeft} ngày`;
+  const daysText = p.raised >= p.goal ? 'Đã đủ vốn' : `Còn ${p.daysLeft} ngày`;
 
   return `
     <div class="col-md-6 col-lg-4">

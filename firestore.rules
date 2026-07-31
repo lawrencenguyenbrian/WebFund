@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ── users ──
+    // Each user reads/writes their own doc (role set on register / select-role).
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // ── projects ──
+    // Anyone can read the feed. Creator manages own project, but only an admin
+    // may change the `raised` field (incremented on pledge confirmation).
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if signedIn() && (
+        isAdmin()
+        || (
+          get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid
+          && request.resource.data.raised == resource.data.raised
+        )
+      );
+      allow delete: if signedIn()
+        && get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid;
+
+      // Project updates — only the project creator can post them.
+      match /updates/{updateId} {
+        allow read: if true;
+        allow write: if signedIn()
+          && get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid;
+      }
+    }
+
+    // ── pledges ──
+    // Authenticated users can read. Users create their own pledges only.
+    // Only an admin may change the `status` field; a non-admin user may update
+    // their own pledge only if the status stays the same.
+    match /pledges/{pledgeId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if signedIn() && (
+        isAdmin()
+        || (
+          get(/databases/$(database)/documents/pledges/$(pledgeId)).data.userId == request.auth.uid
+          && request.resource.data.status == resource.data.status
+        )
+      );
+      allow delete: if signedIn() && isAdmin();
+    }
+  }
+}
