@@ -108,7 +108,7 @@ function renderProjectList(projects) {
     const pct = Math.min(Math.round((p.raised / p.goal) * 100), 100);
     const stageMap = { idea: 'Idea', mvp: 'MVP', growth: 'Growth', scale: 'Scale' };
     const stageClass = { idea: 'bg-warning text-dark', mvp: 'bg-primary text-white', growth: 'bg-info text-dark', scale: 'bg-success text-white' };
-    const daysText = p.daysLeft === 0 ? 'Đã đủ vốn' : `Còn ${p.daysLeft} ngày`;
+    const daysText = p.raised >= p.goal ? 'Đã đủ vốn' : `Còn ${p.daysLeft} ngày`;
     const created = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString('vi-VN') : '';
     const lastUpdate = p.lastUpdate;
 
