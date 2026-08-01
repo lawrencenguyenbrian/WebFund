@@ -53,6 +53,7 @@ function checkAdmin(uid) {
         loadPledges();
         loadPendingProjects();
         loadDeleteRequests();
+        loadDeletedProjects();
       } else {
         document.getElementById('loadingState').hidden = true;
         document.getElementById('notAdminState').hidden = false;
@@ -375,6 +376,85 @@ async function rejectDelete(id, btn) {
     });
     loadDeleteRequests();
     showToast('Đã từ chối yêu cầu xóa');
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+function loadDeletedProjects() {
+  db.collection('deletedProjects').get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        document.getElementById('emptyDeleted').hidden = false;
+        return;
+      }
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      list.sort((a, b) => (b.deletedAt?.seconds || 0) - (a.deletedAt?.seconds || 0));
+      renderDeletedProjects(list);
+    })
+    .catch(() => {
+      document.getElementById('emptyDeleted').hidden = false;
+    });
+}
+
+function renderDeletedProjects(list) {
+  document.getElementById('emptyDeleted').hidden = true;
+  document.getElementById('deletedTable').hidden = false;
+
+  document.getElementById('deletedTableBody').innerHTML = list.map(p => {
+    const deletedAt = p.deletedAt?.toDate ? p.deletedAt.toDate().toLocaleString('vi-VN') : '';
+    const restored = !!p.restoredAt;
+
+    return `
+      <tr>
+        <td>
+          <div class="fw-semibold">${p.name || 'N/A'}</div>
+          <div class="small text-muted">${p.tagline || ''}</div>
+        </td>
+        <td>${p.userName || 'N/A'}</td>
+        <td class="fw-semibold">${formatCurrency(p.goal)}</td>
+        <td class="small text-muted">${deletedAt}</td>
+        <td class="small text-muted">${p.deletedByEmail || 'N/A'}</td>
+        <td>
+          ${restored
+            ? '<span class="badge bg-success text-white">Đã khôi phục</span>'
+            : `<button class="btn btn-sm btn-outline-success" onclick="restoreProject('${p.id}', this)" title="Khôi phục dự án"><i class="bi bi-arrow-counterclockwise"></i></button>`}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function restoreProject(id, btn) {
+  if (btn) btn.disabled = true;
+  const user = firebase.auth().currentUser;
+  try {
+    const snap = await db.collection('deletedProjects').doc(id).get();
+    if (!snap.exists) throw new Error('Không tìm thấy dự án đã xóa');
+
+    const data = snap.data();
+    if (data.restoredAt) throw new Error('Dự án này đã được khôi phục');
+
+    const { deletedAt, deletedBy, deletedByEmail, ...rest } = data;
+
+    await db.collection('projects').doc(id).set({
+      ...rest,
+      deleteRequested: firebase.firestore.FieldValue.delete(),
+      deleteRequestedBy: firebase.firestore.FieldValue.delete(),
+      restoredAt: firebase.firestore.FieldValue.serverTimestamp(),
+      restoredBy: user.uid,
+      restoredByEmail: user.email || ''
+    }, { merge: true });
+
+    await db.collection('deletedProjects').doc(id).update({
+      restoredAt: firebase.firestore.FieldValue.serverTimestamp(),
+      restoredBy: user.uid,
+      restoredByEmail: user.email || ''
+    });
+
+    loadDeletedProjects();
+    showToast('Đã khôi phục dự án');
   } catch (e) {
     if (btn) btn.disabled = false;
     showToast('Lỗi: ' + e.message);
