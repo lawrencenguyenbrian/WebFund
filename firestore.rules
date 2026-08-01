@@ -19,27 +19,49 @@ service cloud.firestore {
     }
 
     // ── projects ──
-    // Anyone can read the feed. Creator manages own project, but only an admin
-    // may change the `raised` field (incremented on pledge confirmation).
+    // New projects are always created as `pending` by their owner. Anyone may
+    // read approved projects; a project that is pending/rejected is readable
+    // only by its owner or an admin. Only an admin may change the `status`
+    // field; a non-admin owner may update their project only if `status` (and
+    // `raised`, incremented on pledge confirmation) stay unchanged.
+    //
+    // Anti-fraud: deletion is admin-only. Owners may only *request* deletion
+    // by setting `deleteRequested`, and an admin decides whether to actually
+    // delete (moved to the deletedProjects audit log) or reject the request.
     match /projects/{projectId} {
-      allow read: if true;
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if resource.data.status == 'approved'
+        || (signedIn() && resource.data.userId == request.auth.uid)
+        || isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending';
       allow update: if signedIn() && (
         isAdmin()
         || (
           get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid
           && request.resource.data.raised == resource.data.raised
+          && request.resource.data.status == resource.data.status
         )
       );
-      allow delete: if signedIn()
-        && get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid;
+      allow delete: if signedIn() && isAdmin();
 
-      // Project updates — only the project creator can post them.
+      // Project updates — only the project creator can post them, and they are
+      // only readable by the same audience as the parent project.
       match /updates/{updateId} {
-        allow read: if true;
+        allow read: if get(/databases/$(database)/documents/projects/$(projectId)).data.status == 'approved'
+          || (signedIn() && get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid)
+          || isAdmin();
         allow write: if signedIn()
           && get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid;
       }
+    }
+
+    // ── deletedProjects (audit trail) ──
+    // When an admin approves a deletion, the project doc is copied here with
+    // `deletedAt` / `deletedBy` before the original is removed. Admin-only so
+    // removals stay traceable and reversible for fraud investigations.
+    match /deletedProjects/{projectId} {
+      allow read, write: if isAdmin();
     }
 
     // ── pledges ──

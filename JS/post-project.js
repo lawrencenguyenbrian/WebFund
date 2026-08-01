@@ -2,17 +2,6 @@
  * ============================================================
  *  Cloudinary Configuration
  * ============================================================
- *  Để tích hợp Cloudinary, bạn cần:
- *
- *  1. Tạo tài khoản miễn phí tại https://cloudinary.com
- *  2. Lấy "Cloud Name" từ Dashboard (VD: "dxyz123abc")
- *  3. Tạo Upload Preset:
- *     - Vào Settings → Upload → Upload presets
- *     - Click "Add upload preset"
- *     - Signing Mode: Chọn "Unsigned" (cho frontend)
- *     - Lưu lại tên preset (VD: "webfund_uploads")
- *  4. Điền thông tin vào bên dưới:
- * ============================================================
  */
 const CLOUDINARY_CONFIG = {
   cloudName: 'dfdom0zpb',
@@ -21,10 +10,32 @@ const CLOUDINARY_CONFIG = {
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`;
 const MAX_GALLERY_IMAGES = 6;
 
+/*
+ * ============================================================
+ *  Gemini API Configuration (AI Pitch Helper)
+ * ============================================================
+ */
+const GEMINI_CONFIG = {
+  apiKey: 'YOUR_GEMINI_API_KEY',
+  model: 'gemini-3-flash-preview'
+};
+
 const db = firebase.firestore();
 let currentStep = 1;
 let coverImageUrl = '';
 let galleryUrls = [];
+let currentUserRole = null;
+let editingProjectId = null;
+let editingProject = null;
+let handleCoverFile = null;
+
+const CHAR_LIMITS = [
+  ['pName', 'nameCount', 100],
+  ['pTagline', 'taglineCount', 150],
+  ['pDesc', 'descCount', 2000],
+  ['pUseOfFunds', 'fundsCount', 500],
+  ['pTeam', 'teamCount', 500]
+];
 
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -38,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMilestones();
   initFormSubmit();
   initPostAnother();
+  initAiHelper();
 });
 
 /* ── Auth UI ── */
@@ -58,6 +70,7 @@ function initAuthUI() {
 
       db.collection('users').doc(user.uid).get().then(doc => {
         const role = doc.exists ? doc.data().role : null;
+        currentUserRole = role;
         if (role === 'investor') {
           if (myProjectsLink) myProjectsLink.style.display = 'none';
           if (portfolioLink) portfolioLink.style.display = 'block';
@@ -66,7 +79,11 @@ function initAuthUI() {
           if (portfolioLink) portfolioLink.style.display = 'none';
         }
         if (adminLink) adminLink.style.display = role === 'admin' ? 'block' : 'none';
-      }).catch(() => {});
+        loadEditMode(user);
+      }).catch(() => {
+        currentUserRole = null;
+        loadEditMode(user);
+      });
     } else {
       authBtns.style.display = 'flex';
       userMenu.style.display = 'none';
@@ -165,25 +182,29 @@ function validateStep(step) {
 
 /* ── Character Counters ── */
 function initCharCounters() {
-  const pairs = [
-    ['pName', 'nameCount', 100],
-    ['pTagline', 'taglineCount', 150],
-    ['pDesc', 'descCount', 2000],
-    ['pUseOfFunds', 'fundsCount', 500],
-    ['pTeam', 'teamCount', 500]
-  ];
-  pairs.forEach(([inputId, countId, max]) => {
+  CHAR_LIMITS.forEach(([inputId, countId, max]) => {
     const input = document.getElementById(inputId);
     const counter = document.getElementById(countId);
     if (!input || !counter) return;
-    input.addEventListener('input', () => {
-      const len = input.value.length;
-      counter.textContent = len;
-      const parent = counter.parentElement;
-      parent.classList.remove('warning', 'danger');
-      if (len > max * 0.9) parent.classList.add('danger');
-      else if (len > max * 0.7) parent.classList.add('warning');
-    });
+    input.addEventListener('input', () => updateCharCount(input, counter, max));
+    updateCharCount(input, counter, max);
+  });
+}
+
+function updateCharCount(input, counter, max) {
+  const len = input.value.length;
+  counter.textContent = len;
+  const parent = counter.parentElement;
+  parent.classList.remove('warning', 'danger');
+  if (len > max * 0.9) parent.classList.add('danger');
+  else if (len > max * 0.7) parent.classList.add('warning');
+}
+
+function updateCharCounters() {
+  CHAR_LIMITS.forEach(([inputId, countId, max]) => {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(countId);
+    if (input && counter) updateCharCount(input, counter, max);
   });
 }
 
@@ -259,7 +280,7 @@ function initCoverUpload() {
     if (input.files[0]) handleCoverFile(input.files[0]);
   });
 
-  async function handleCoverFile(file) {
+  handleCoverFile = async function (file) {
     if (file.size > 5 * 1024 * 1024) {
       showToast('Ảnh bìa không được vượt quá 5MB');
       return;
@@ -309,6 +330,16 @@ function initCoverUpload() {
       });
     }
   }
+}
+
+function setCoverPreview(url) {
+  const zone = document.getElementById('coverUploadZone');
+  zone.innerHTML = `<img src="${url}" alt="Cover preview"><input type="file" id="coverInput" accept="image/*">`;
+  zone.classList.add('has-image');
+  const input = zone.querySelector('input[type="file"]');
+  input.addEventListener('change', () => {
+    if (input.files[0]) handleCoverFile(input.files[0]);
+  });
 }
 
 /* ── Gallery Upload ── */
@@ -441,6 +472,13 @@ function initTags() {
 
   // Expose tags for form submission
   window.getProjectTags = () => [...tags];
+  window.setProjectTags = (list) => {
+    tags.length = 0;
+    (list || []).forEach(t => {
+      if (t && !tags.includes(t)) tags.push(t);
+    });
+    renderTags();
+  };
 }
 
 /* ── Milestones ── */
@@ -448,18 +486,21 @@ function initMilestones() {
   const container = document.getElementById('milestones');
   const addBtn = document.getElementById('addMilestoneBtn');
 
-  addBtn.addEventListener('click', () => {
-    const count = container.querySelectorAll('.milestone-row').length;
-    if (count >= 5) { showToast('Tối đa 5 cột mốc'); return; }
-
+  function addMilestoneRow(title, date) {
     const row = document.createElement('div');
     row.className = 'd-flex gap-2 mb-2 align-items-center milestone-row';
     row.innerHTML = `
-      <input type="text" class="form-control form-control-sm" placeholder="Mô tả cột mốc" style="flex:2">
-      <input type="date" class="form-control form-control-sm" style="flex:1">
+      <input type="text" class="form-control form-control-sm" placeholder="Mô tả cột mốc" style="flex:2" value="${escapeAttr(title || '')}">
+      <input type="date" class="form-control form-control-sm" style="flex:1" value="${date || ''}">
       <button type="button" class="btn btn-sm btn-outline-danger border-0 milestone-remove" title="Xóa"><i class="bi bi-x-lg"></i></button>`;
     row.querySelector('.milestone-remove').addEventListener('click', () => row.remove());
     container.appendChild(row);
+  }
+
+  addBtn.addEventListener('click', () => {
+    const count = container.querySelectorAll('.milestone-row').length;
+    if (count >= 5) { showToast('Tối đa 5 cột mốc'); return; }
+    addMilestoneRow('', '');
   });
 
   container.querySelectorAll('.milestone-remove').forEach(btn => {
@@ -469,6 +510,12 @@ function initMilestones() {
       }
     });
   });
+
+  window.setProjectMilestones = (list) => {
+    container.querySelectorAll('.milestone-row').forEach(el => el.remove());
+    (list || []).forEach(m => addMilestoneRow(m.title, m.date));
+    if (!container.querySelector('.milestone-row')) addMilestoneRow('', '');
+  };
 }
 
 function getMilestones() {
@@ -481,6 +528,218 @@ function getMilestones() {
     if (title) milestones.push({ title, date: date || null });
   });
   return milestones;
+}
+
+/* ── Edit Mode ── */
+function loadEditMode(user) {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('edit');
+  if (!id) return;
+  editingProjectId = id;
+
+  db.collection('projects').doc(id).get()
+    .then(doc => {
+      if (!doc.exists) {
+        window.location.href = 'my-projects.html';
+        return;
+      }
+      const p = { id: doc.id, ...doc.data() };
+      if (p.userId !== user.uid && currentUserRole !== 'admin') {
+        window.location.href = 'my-projects.html';
+        return;
+      }
+      editingProject = p;
+      fillForm(p);
+    })
+    .catch(() => window.location.href = 'my-projects.html');
+}
+
+function fillForm(p) {
+  const titleEl = document.querySelector('.post-hero h2');
+  const subEl = document.querySelector('.post-hero p');
+  if (titleEl) titleEl.textContent = 'Chỉnh sửa dự án';
+  if (subEl) subEl.textContent = 'Cập nhật thông tin dự án của bạn.';
+  document.getElementById('submitText').textContent = 'Lưu thay đổi';
+
+  // Step 1
+  document.getElementById('pName').value = p.name || '';
+  document.getElementById('pTagline').value = p.tagline || '';
+  document.getElementById('pDesc').value = p.desc || '';
+  document.getElementById('pCategory').value = p.category || '';
+  document.getElementById('pStage').value = p.stage || '';
+
+  const catLabel = document.getElementById('pCategory').selectedOptions[0]?.text || '';
+  const stageLabel = document.getElementById('pStage').selectedOptions[0]?.text || '';
+  const initialTags = (p.tags || []).filter(t => t && t !== catLabel && t !== stageLabel);
+  setProjectTags(initialTags);
+
+  // Step 2
+  if (p.coverImage) setCoverPreview(p.coverImage);
+  galleryUrls = p.gallery || [];
+  document.getElementById('pCoverUrl').value = p.coverImage || '';
+  document.getElementById('pGalleryUrls').value = galleryUrls.join(',');
+  updateGalleryGrid();
+
+  // Step 3
+  document.getElementById('pGoal').value = p.goal || '';
+  document.getElementById('pDaysLeft').value = p.daysLeft || 30;
+  document.getElementById('pUseOfFunds').value = p.useOfFunds || '';
+  setProjectMilestones(p.milestones || []);
+  setProjectStrategies(p.strategies || []);
+
+  // Step 4
+  document.getElementById('pUrl').value = p.url || '';
+  document.getElementById('pEmail').value = p.email || '';
+  document.getElementById('pTeam').value = p.team || '';
+  const social = p.socialLinks || {};
+  document.getElementById('pFacebook').value = social.facebook || '';
+  document.getElementById('pLinkedin').value = social.linkedin || '';
+  document.getElementById('pTwitter').value = social.twitter || '';
+  document.getElementById('pGithub').value = social.github || '';
+
+  updateCharCounters();
+  goToStep(1);
+}
+
+function setProjectStrategies(list) {
+  const map = { crowdfund: 'stratCrowdfund', angel: 'stratAngel', skill: 'stratSkill' };
+  for (const key in map) {
+    const el = document.getElementById(map[key]);
+    if (el) el.checked = (list || []).includes(key);
+  }
+}
+
+function escapeAttr(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/* ── AI Pitch Helper ── */
+let aiSuggestion = null;
+const AI_FIELD_LIMITS = { pName: 100, pTagline: 150, pDesc: 2000 };
+const AI_FIELD_KEYS = { pName: 'name', pTagline: 'tagline', pDesc: 'desc' };
+
+function initAiHelper() {
+  const btn = document.getElementById('aiSuggestBtn');
+  if (!btn) return;
+  const textarea = document.getElementById('pIdeaRough');
+  const icon = btn.querySelector('.ai-btn-icon');
+
+  btn.addEventListener('click', async () => {
+    const rough = textarea.value.trim();
+    if (!rough) {
+      showToast('Vui lòng nhập ý tưởng sơ bộ trước khi dùng AI');
+      return;
+    }
+
+    btn.disabled = true;
+    if (icon) {
+      icon.classList.remove('bi-stars');
+      icon.classList.add('spinner-border', 'spinner-border-sm');
+    }
+
+    try {
+      aiSuggestion = await generatePitchSuggestion(rough);
+      renderAiSuggestions(aiSuggestion);
+    } catch (err) {
+      showToast(err.message || 'Không thể kết nối AI, vui lòng thử lại');
+    } finally {
+      btn.disabled = false;
+      if (icon) {
+        icon.classList.add('bi-stars');
+        icon.classList.remove('spinner-border', 'spinner-border-sm');
+      }
+    }
+  });
+
+  const card = document.getElementById('aiSuggestionCard');
+  if (card) {
+    card.querySelectorAll('.ai-apply-btn').forEach(applyBtn => {
+      applyBtn.addEventListener('click', () => {
+        const field = applyBtn.dataset.target;
+        const key = AI_FIELD_KEYS[field];
+        const input = document.getElementById(field);
+        if (!input || !aiSuggestion || !aiSuggestion[key]) return;
+        input.value = aiSuggestion[key].slice(0, AI_FIELD_LIMITS[field]);
+        updateCharCounters();
+        showToast('Đã áp dụng gợi ý');
+      });
+    });
+  }
+}
+
+async function generatePitchSuggestion(roughIdea) {
+  const apiKey = GEMINI_CONFIG.apiKey;
+  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY') {
+    throw new Error('Chưa cấu hình Gemini API key. Vui lòng điền GEMINI_CONFIG ở đầu file post-project.js');
+  }
+
+  const prompt = `Bạn là chuyên gia pitch startup gọi vốn. Dựa trên ý tưởng của nhà sáng lập dưới đây, hãy tạo một bài pitch tiếng Việt hoàn chỉnh gồm 3 trường:
+- name: tên dự án ngắn gọn, ấn tượng (tối đa 100 ký tự)
+- tagline: mô tả ngắn hấp dẫn (tối đa 150 ký tự)
+- desc: bài giới thiệu pitch chi tiết, giọng điệu startup (tối đa 2000 ký tự)
+
+Trả về DUY NHẤT một object JSON hợp lệ với đúng 3 trường name, tagline, desc.
+Không dùng markdown, không bọc trong \`\`\`json, không thêm lời mở đầu hay giải thích. Chỉ trả về JSON thuần.
+
+Ý tưởng của nhà sáng lập:
+"${roughIdea}"`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_CONFIG.model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    }
+  );
+
+  if (!response.ok) {
+    let msg = `Lỗi API Gemini (${response.status})`;
+    try {
+      const errData = await response.json();
+      msg = errData.error?.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+
+  const data = await response.json();
+  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!raw) throw new Error('Gemini không trả về nội dung');
+
+  let parsed;
+  try {
+    parsed = JSON.parse(stripJsonFences(raw));
+  } catch {
+    throw new Error('Không thể đọc phản hồi của AI');
+  }
+
+  return {
+    name: String(parsed.name || '').trim(),
+    tagline: String(parsed.tagline || '').trim(),
+    desc: String(parsed.desc || '').trim()
+  };
+}
+
+function stripJsonFences(text) {
+  return text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/, '');
+}
+
+function renderAiSuggestions(suggestion) {
+  document.getElementById('aiName').textContent = suggestion.name || '—';
+  document.getElementById('aiTagline').textContent = suggestion.tagline || '—';
+  document.getElementById('aiDesc').textContent = suggestion.desc || '—';
+  const card = document.getElementById('aiSuggestionCard');
+  card.hidden = false;
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 /* ── Form Submit ── */
@@ -500,7 +759,7 @@ function initFormSubmit() {
 
     // Disable submit button
     submitBtn.disabled = true;
-    submitText.textContent = 'Đang đăng...';
+    submitText.textContent = editingProjectId ? 'Đang lưu...' : 'Đang đăng...';
     submitSpinner.style.display = 'inline-block';
 
     const name = document.getElementById('pName').value.trim();
@@ -536,24 +795,44 @@ function initFormSubmit() {
     if (tw) socialLinks.twitter = tw;
     if (gh) socialLinks.github = gh;
 
-    const project = {
+    const baseProject = {
       name, tagline, desc, category, stage, tags,
-      goal, raised: 0, daysLeft,
+      goal, daysLeft,
       coverImage: coverImageUrl,
       gallery: galleryUrls,
       url, email, team, useOfFunds,
       strategies,
       socialLinks: Object.keys(socialLinks).length ? socialLinks : null,
-      milestones: getMilestones(),
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      userId: user.uid,
-      userName: user.displayName || user.email
+      milestones: getMilestones()
     };
 
     try {
-      await db.collection('projects').add(project);
+      if (editingProjectId && editingProject) {
+        await db.collection('projects').doc(editingProjectId).set({
+          ...baseProject,
+          status: editingProject.status || 'pending',
+          raised: editingProject.raised || 0
+        }, { merge: true });
+      } else {
+        await db.collection('projects').add({
+          ...baseProject,
+          status: 'pending',
+          raised: 0,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          userId: user.uid,
+          userName: user.displayName || user.email
+        });
+      }
 
       // Show success state
+      if (editingProjectId && editingProject) {
+        document.getElementById('successTitle').textContent = 'Lưu thay đổi thành công!';
+        document.getElementById('successDesc').textContent = 'Thông tin dự án của bạn đã được cập nhật.';
+        document.getElementById('viewProjectBtn').textContent = 'Xem dự án';
+        document.getElementById('viewProjectBtn').href = `project.html?id=${editingProjectId}`;
+        document.getElementById('postAnotherBtn').style.display = 'none';
+      }
+
       document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
       document.querySelector('.form-section[data-step="5"]').classList.add('active');
       document.getElementById('successState').hidden = false;
@@ -562,7 +841,7 @@ function initFormSubmit() {
     } catch (e) {
       showErr(err, 'Không thể đăng dự án, vui lòng thử lại');
       submitBtn.disabled = false;
-      submitText.textContent = 'Đăng dự án';
+      submitText.textContent = editingProjectId ? 'Lưu thay đổi' : 'Đăng dự án';
       submitSpinner.style.display = 'none';
     }
   });

@@ -89,6 +89,48 @@
                 <p class="form-section-title">Thông tin cơ bản</p>
                 <p class="form-section-desc">Giới thiệu ngắn gọn về dự án của bạn.</p>
 
+                <div class="ai-helper-box mb-3">
+                  <label class="form-label small fw-semibold">Ý tưởng sơ bộ</label>
+                  <textarea class="form-control" id="pIdeaRough" rows="3" placeholder="VD: App giúp sinh viên tìm phòng trọ nhanh, xem ảnh thực tế 360 và đánh giá từ người thuê trước đó..."></textarea>
+                  <div class="d-flex align-items-center justify-content-between gap-2 mt-2 flex-wrap">
+                    <small class="text-muted">Gợi ý tên, mô tả ngắn và bài giới thiệu từ ý tưởng của bạn.</small>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="aiSuggestBtn">
+                      <i class="bi bi-stars ai-btn-icon"></i> Gợi ý bằng AI
+                    </button>
+                  </div>
+                </div>
+
+                <div class="ai-suggestion-card" id="aiSuggestionCard" hidden>
+                  <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                    <i class="bi bi-stars text-primary"></i>
+                    <h6 class="mb-0 fw-bold">Gợi ý từ AI</h6>
+                    <span class="text-muted small ms-auto">Nhấn "Áp dụng" để chọn từng gợi ý</span>
+                  </div>
+                  <div class="d-flex flex-column gap-2">
+                    <div class="ai-suggestion-row">
+                      <div class="flex-grow-1">
+                        <div class="small fw-semibold text-muted">Tên dự án</div>
+                        <div class="ai-suggestion-text" id="aiName"></div>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-primary ai-apply-btn" data-target="pName">Áp dụng</button>
+                    </div>
+                    <div class="ai-suggestion-row">
+                      <div class="flex-grow-1">
+                        <div class="small fw-semibold text-muted">Mô tả ngắn</div>
+                        <div class="ai-suggestion-text" id="aiTagline"></div>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-primary ai-apply-btn" data-target="pTagline">Áp dụng</button>
+                    </div>
+                    <div class="ai-suggestion-row">
+                      <div class="flex-grow-1">
+                        <div class="small fw-semibold text-muted">Mô tả chi tiết</div>
+                        <div class="ai-suggestion-text" id="aiDesc"></div>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-primary ai-apply-btn" data-target="pDesc">Áp dụng</button>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="row g-3">
                   <div class="col-12">
                     <label class="form-label small fw-semibold">Tên dự án <span class="text-danger">*</span></label>
@@ -304,10 +346,10 @@
               <div class="form-section" data-step="5">
                 <div class="success-state" id="successState" hidden>
                   <div class="success-icon"><i class="bi bi-check-lg"></i></div>
-                  <h3>Đăng dự án thành công!</h3>
-                  <p>Dự án của bạn đã được đăng lên WebFund. Nhà đầu tư có thể thấy dự án ngay trên trang chủ.</p>
+                  <h3 id="successTitle">Đã gửi dự án thành công!</h3>
+                  <p id="successDesc">Dự án của bạn đã được gửi lên WebFund và đang chờ quản trị viên duyệt. Nhà đầu tư sẽ thấy dự án ngay sau khi được duyệt.</p>
                   <div class="d-flex gap-2 justify-content-center mt-4">
-                    <a href="main.html" class="btn btn-primary">Xem trên trang chủ</a>
+                    <a href="main.html" class="btn btn-primary" id="viewProjectBtn">Quay lại trang chủ</a>
                     <button type="button" class="btn btn-outline-secondary" id="postAnotherBtn">Đăng dự án khác</button>
                   </div>
                 </div>

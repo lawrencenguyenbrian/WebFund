@@ -108,9 +108,15 @@ function renderProjectList(projects) {
     const pct = Math.min(Math.round((p.raised / p.goal) * 100), 100);
     const stageMap = { idea: 'Idea', mvp: 'MVP', growth: 'Growth', scale: 'Scale' };
     const stageClass = { idea: 'bg-warning text-dark', mvp: 'bg-primary text-white', growth: 'bg-info text-dark', scale: 'bg-success text-white' };
+    const statusMap = {
+      pending: { label: 'Chờ duyệt', class: 'bg-warning text-dark' },
+      approved: { label: 'Đã duyệt', class: 'bg-success text-white' },
+      rejected: { label: 'Từ chối', class: 'bg-danger text-white' }
+    };
     const daysText = p.raised >= p.goal ? 'Đã đủ vốn' : `Còn ${p.daysLeft} ngày`;
     const created = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString('vi-VN') : '';
     const lastUpdate = p.lastUpdate;
+    const deleting = !!p.deleteRequested;
 
     let updateHtml = '';
     if (lastUpdate) {
@@ -133,6 +139,8 @@ function renderProjectList(projects) {
         <div class="project-row-body">
           <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <span class="badge ${stageClass[p.stage] || 'bg-secondary'}">${stageMap[p.stage] || p.stage}</span>
+            ${statusMap[p.status] ? `<span class="badge ${statusMap[p.status].class}">${statusMap[p.status].label}</span>` : ''}
+            ${deleting ? '<span class="badge bg-warning text-dark" title="Đang chờ quản trị viên duyệt"><i class="bi bi-hourglass-split"></i> Chờ xóa</span>' : ''}
             <span class="small text-muted">${daysText}</span>
           </div>
           <h5 class="mb-1"><a href="project.html?id=${p.id}" class="text-decoration-none project-row-title">${p.name}</a></h5>
@@ -148,9 +156,13 @@ function renderProjectList(projects) {
         </div>
         <div class="project-row-actions">
           <a href="project.html?id=${p.id}" class="btn btn-sm btn-outline-primary">Xem</a>
+          <a href="post-project.html?edit=${p.id}" class="btn btn-sm btn-outline-secondary" title="Chỉnh sửa"><i class="bi bi-pencil"></i></a>
           <button class="btn btn-sm btn-outline-secondary open-update-btn" data-id="${p.id}" data-name="${p.name}">
             <i class="bi bi-megaphone"></i>
           </button>
+          ${deleting
+            ? `<button class="btn btn-sm btn-outline-secondary cancel-delete-btn" data-id="${p.id}" title="Hủy yêu cầu xóa"><i class="bi bi-x-lg"></i></button>`
+            : `<button class="btn btn-sm btn-outline-danger delete-btn" data-id="${p.id}" data-name="${p.name}" title="Yêu cầu xóa"><i class="bi bi-trash"></i></button>`}
         </div>
       </div>
     `;
@@ -159,6 +171,46 @@ function renderProjectList(projects) {
   container.querySelectorAll('.open-update-btn').forEach(btn => {
     btn.addEventListener('click', () => openUpdateModal(btn.dataset.id));
   });
+
+  container.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => requestDelete(btn.dataset.id, btn.dataset.name, btn));
+  });
+
+  container.querySelectorAll('.cancel-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => cancelDelete(btn.dataset.id, btn));
+  });
+}
+
+async function requestDelete(projectId, projectName, btn) {
+  if (!confirm(`Bạn có chắc muốn yêu cầu xóa "${projectName}"?\nYêu cầu sẽ phải được quản trị viên duyệt trước khi dự án bị xóa.`)) return;
+  btn.disabled = true;
+  try {
+    await db.collection('projects').doc(projectId).update({
+      deleteRequested: firebase.firestore.FieldValue.serverTimestamp(),
+      deleteRequestedBy: firebase.auth().currentUser.uid
+    });
+    showToast('Đã gửi yêu cầu xóa, chờ quản trị viên duyệt');
+    setTimeout(() => location.reload(), 800);
+  } catch (err) {
+    btn.disabled = false;
+    showToast(err.message);
+  }
+}
+
+async function cancelDelete(projectId, btn) {
+  if (!confirm('Hủy yêu cầu xóa dự án này?')) return;
+  btn.disabled = true;
+  try {
+    await db.collection('projects').doc(projectId).update({
+      deleteRequested: firebase.firestore.FieldValue.delete(),
+      deleteRequestedBy: firebase.firestore.FieldValue.delete()
+    });
+    showToast('Đã hủy yêu cầu xóa');
+    setTimeout(() => location.reload(), 800);
+  } catch (err) {
+    btn.disabled = false;
+    showToast(err.message);
+  }
 }
 
 function openUpdateModal(projectId) {

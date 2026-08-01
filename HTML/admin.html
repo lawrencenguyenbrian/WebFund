@@ -106,6 +106,69 @@
               </div>
             </div>
 
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-5 mb-3">
+              <div>
+                <h2 class="fw-bold mb-1">Dự án chờ duyệt</h2>
+                <p class="text-muted small mb-0">Duyệt hoặc từ chối các dự án mới đăng.</p>
+              </div>
+            </div>
+
+            <!-- Empty -->
+            <div id="emptyProjects" class="text-center py-5" hidden>
+              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-inbox"></i></div>
+              <h4>Không có dự án chờ duyệt</h4>
+              <p class="text-muted">Chưa có dự án nào cần xử lý.</p>
+            </div>
+
+            <!-- Pending projects table -->
+            <div id="projectTable" class="admin-table-card" hidden>
+              <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                  <thead>
+                    <tr>
+                      <th>Dự án</th>
+                      <th>Người sáng lập</th>
+                      <th>Mục tiêu</th>
+                      <th>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="projectTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-5 mb-3">
+              <div>
+                <h2 class="fw-bold mb-1">Yêu cầu xóa dự án</h2>
+                <p class="text-muted small mb-0">Duyệt hoặc từ chối yêu cầu xóa dự án từ người sáng lập.</p>
+              </div>
+            </div>
+
+            <!-- Empty -->
+            <div id="emptyDeleteRequests" class="text-center py-5" hidden>
+              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-inbox"></i></div>
+              <h4>Không có yêu cầu xóa</h4>
+              <p class="text-muted">Chưa có yêu cầu nào cần xử lý.</p>
+            </div>
+
+            <!-- Delete request table -->
+            <div id="deleteRequestTable" class="admin-table-card" hidden>
+              <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                  <thead>
+                    <tr>
+                      <th>Dự án</th>
+                      <th>Người sáng lập</th>
+                      <th>Mục tiêu</th>
+                      <th>Yêu cầu lúc</th>
+                      <th>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="deleteRequestTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
 
         </div>

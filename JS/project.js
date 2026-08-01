@@ -1,10 +1,19 @@
 const db = firebase.firestore();
 let currentProject = null;
+let currentUser = null;
+let currentUserRole = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
   initAuthUI();
-  loadProject();
+
+  const deleteBtn = document.getElementById('deleteProjectBtn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      requestProjectDeletion();
+    });
+  }
 });
 
 function initAuthUI() {
@@ -18,6 +27,7 @@ function initAuthUI() {
   const logoutBtn = document.getElementById('logoutBtn');
 
   firebase.auth().onAuthStateChanged((user) => {
+    currentUser = user;
     if (user) {
       authBtns.style.display = 'none';
       userMenu.style.display = 'block';
@@ -27,8 +37,8 @@ function initAuthUI() {
       checkOwner(user.uid);
 
       db.collection('users').doc(user.uid).get().then(doc => {
-        const role = doc.exists ? doc.data().role : null;
-        if (role === 'investor') {
+        currentUserRole = doc.exists ? doc.data().role : null;
+        if (currentUserRole === 'investor') {
           createBtn.style.display = 'none';
           if (myProjectsLink) myProjectsLink.style.display = 'none';
           if (portfolioLink) portfolioLink.style.display = 'block';
@@ -36,12 +46,18 @@ function initAuthUI() {
           if (myProjectsLink) myProjectsLink.style.display = 'block';
           if (portfolioLink) portfolioLink.style.display = 'none';
         }
-        if (adminLink) adminLink.style.display = role === 'admin' ? 'block' : 'none';
-      }).catch(() => {});
+        if (adminLink) adminLink.style.display = currentUserRole === 'admin' ? 'block' : 'none';
+        loadProject();
+      }).catch(() => {
+        currentUserRole = null;
+        loadProject();
+      });
     } else {
+      currentUserRole = null;
       authBtns.style.display = 'flex';
       userMenu.style.display = 'none';
       createBtn.style.display = 'none';
+      loadProject();
     }
   });
 
@@ -76,6 +92,13 @@ function showNotFound() {
 }
 
 function renderProject(p) {
+  const isOwner = currentUser && p.userId === currentUser.uid;
+  const isAdmin = currentUserRole === 'admin';
+  if (p.status !== 'approved' && !isOwner && !isAdmin) {
+    showNotFound();
+    return;
+  }
+
   document.getElementById('loadingState').hidden = true;
   document.getElementById('projectContent').hidden = false;
 
@@ -195,14 +218,42 @@ function renderProject(p) {
 
   // Pledge button
   document.getElementById('pledgeBtn').href = `pledge.html?id=${p.id}`;
+
+  if (currentUser) checkOwner(currentUser.uid);
 }
 
 function checkOwner(uid) {
   if (!currentProject || currentProject.userId !== uid) return;
   document.getElementById('ownerActions').hidden = false;
-  document.getElementById('manageProjectBtn').href = `my-projects.html`;
-  document.getElementById('pledgeBtn').textContent = 'Quản lý dự án';
-  document.getElementById('pledgeBtn').href = 'my-projects.html';
+  document.getElementById('editProjectBtn').href = `post-project.html?edit=${currentProject.id}`;
+  document.getElementById('manageProjectBtn').href = 'my-projects.html';
+
+  const deleteBtn = document.getElementById('deleteProjectBtn');
+  if (deleteBtn) {
+    if (currentProject.deleteRequested) {
+      deleteBtn.textContent = 'Đã yêu cầu xóa';
+      deleteBtn.classList.remove('btn-outline-danger');
+      deleteBtn.classList.add('btn-outline-secondary');
+      deleteBtn.style.pointerEvents = 'none';
+      deleteBtn.style.opacity = '.6';
+    }
+  }
+}
+
+async function requestProjectDeletion() {
+  if (!currentProject || currentProject.deleteRequested) return;
+  if (!confirm(`Bạn có chắc muốn yêu cầu xóa "${currentProject.name}"?\nYêu cầu sẽ phải được quản trị viên duyệt trước khi dự án bị xóa.`)) return;
+
+  try {
+    await db.collection('projects').doc(currentProject.id).update({
+      deleteRequested: firebase.firestore.FieldValue.serverTimestamp(),
+      deleteRequestedBy: firebase.auth().currentUser.uid
+    });
+    alert('Đã gửi yêu cầu xóa, chờ quản trị viên duyệt.');
+    location.reload();
+  } catch (err) {
+    alert('Lỗi: ' + err.message);
+  }
 }
 
 function formatCurrency(n) {
