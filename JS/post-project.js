@@ -10,15 +10,8 @@ const CLOUDINARY_CONFIG = {
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`;
 const MAX_GALLERY_IMAGES = 6;
 
-/*
- * ============================================================
- *  Gemini API Configuration (AI Pitch Helper)
- * ============================================================
- */
-const GEMINI_CONFIG = {
-  apiKey: 'YOUR_GEMINI_API_KEY',
-  model: 'gemini-3-flash-preview'
-};
+// Gemini API configuration (AI Pitch Helper) is defined in JS/config.local.js
+// (gitignored; copy from JS/config.local.example.js). Must be loaded first.
 
 const db = firebase.firestore();
 let currentStep = 1;
@@ -673,8 +666,8 @@ function initAiHelper() {
 
 async function generatePitchSuggestion(roughIdea) {
   const apiKey = GEMINI_CONFIG.apiKey;
-  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY') {
-    throw new Error('Chưa cấu hình Gemini API key. Vui lòng điền GEMINI_CONFIG ở đầu file post-project.js');
+  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
+    throw new Error('Chưa cấu hình Gemini API key. Vui lòng copy JS/config.local.example.js thành JS/config.local.js và điền key của bạn.');
   }
 
   const prompt = `Bạn là chuyên gia pitch startup gọi vốn. Dựa trên ý tưởng của nhà sáng lập dưới đây, hãy tạo một bài pitch tiếng Việt hoàn chỉnh gồm 3 trường:

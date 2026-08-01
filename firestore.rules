@@ -6,28 +6,56 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Reusable admin check. Looks up the caller's own users/{uid} doc — only an
+    // existing 'admin' passes. Note: get() inside rules is evaluated directly,
+    // so it does not itself require read access on the users collection.
     function isAdmin() {
       return signedIn()
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    // A user may self-assign only the two regular roles — never 'admin'.
+    function isRegularRole(role) {
+      return role == 'founder' || role == 'investor';
+    }
+
     // ── users ──
-    // Each user reads/writes their own doc (role set on register / select-role).
+    // Any signed-in user may read any user doc (for founder/investor names).
+    // A user creates/updates their own doc and may pick founder/investor, but
+    // can never promote themselves to admin (or demote an existing admin).
+    // Only an existing admin may grant the 'admin' role to someone.
+    // Account deletion is self-service only (settings.js).
     match /users/{uid} {
       allow read: if signedIn();
-      allow write: if signedIn() && request.auth.uid == uid;
+      allow create: if request.auth.uid == uid
+        && isRegularRole(request.resource.data.role);
+      allow update: if signedIn() && (
+        isAdmin()
+        || (
+          request.auth.uid == uid
+          && (
+            request.resource.data.role == resource.data.role
+            || (
+              resource.data.role != 'admin'
+              && isRegularRole(request.resource.data.role)
+            )
+          )
+        )
+      );
+      allow delete: if request.auth.uid == uid;
     }
 
     // ── projects ──
-    // New projects are always created as `pending` by their owner. Anyone may
-    // read approved projects; a project that is pending/rejected is readable
-    // only by its owner or an admin. Only an admin may change the `status`
-    // field; a non-admin owner may update their project only if `status` (and
-    // `raised`, incremented on pledge confirmation) stay unchanged.
-    //
-    // Anti-fraud: deletion is admin-only. Owners may only *request* deletion
-    // by setting `deleteRequested`, and an admin decides whether to actually
-    // delete (moved to the deletedProjects audit log) or reject the request.
+    // Read: approved projects are public; owners and admins see every status.
+    // Create: signed-in users may only create `pending` projects with
+    //   `raised == 0` owned by themselves — no pre-approved or pre-funded
+    //   documents. Admins may additionally create docs as-is, which is
+    //   required by the admin "restore deleted project" flow.
+    // Update: an owner may edit content and set/clear their own delete request,
+    //   but never change status, raised, or userId. Admins may change status,
+    //   adjust raised (on pledge confirmation), or clear a delete request
+    //   (reject).
+    // Delete: admins only — removal first copies the doc to deletedProjects.
     match /projects/{projectId} {
       allow read: if resource.data.status == 'approved'
         || (signedIn() && resource.data.userId == request.auth.uid)
@@ -37,20 +65,22 @@ service cloud.firestore {
         || (
           request.resource.data.userId == request.auth.uid
           && request.resource.data.status == 'pending'
+          && request.resource.data.raised == 0
         )
       );
       allow update: if signedIn() && (
         isAdmin()
         || (
-          get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid
+          resource.data.userId == request.auth.uid
+          && request.resource.data.userId == resource.data.userId
           && request.resource.data.raised == resource.data.raised
           && request.resource.data.status == resource.data.status
         )
       );
       allow delete: if signedIn() && isAdmin();
 
-      // Project updates — only the project creator can post them, and they are
-      // only readable by the same audience as the parent project.
+      // Founder posts progress updates — owner writes only; readable by the
+      // same audience as the parent project.
       match /updates/{updateId} {
         allow read: if get(/databases/$(database)/documents/projects/$(projectId)).data.status == 'approved'
           || (signedIn() && get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid)
@@ -60,29 +90,29 @@ service cloud.firestore {
       }
     }
 
-    // ── deletedProjects (audit trail) ──
-    // When an admin approves a deletion, the project doc is copied here with
-    // `deletedAt` / `deletedBy` before the original is removed. Admin-only so
-    // removals stay traceable and reversible for fraud investigations.
+    // ── deletedProjects (internal audit log) ──
+    // Admin-only read, write, and delete. Not user-facing; keeps removals
+    // traceable and reversible (admin restore re-creates the project doc).
     match /deletedProjects/{projectId} {
       allow read, write: if isAdmin();
     }
 
     // ── pledges ──
-    // Authenticated users can read. Users create their own pledges only.
-    // Only an admin may change the `status` field; a non-admin user may update
-    // their own pledge only if the status stays the same.
+    // Read: users see only their own pledges; admins see all.
+    // Create: signed-in users pledge for themselves, always as `pending`.
+    // Update: only an admin may change status (confirm/reject); amount,
+    //   projectId, and userId are immutable after creation.
+    // Delete: never — pledges are a permanent record.
     match /pledges/{pledgeId} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if signedIn() && (
-        isAdmin()
-        || (
-          get(/databases/$(database)/documents/pledges/$(pledgeId)).data.userId == request.auth.uid
-          && request.resource.data.status == resource.data.status
-        )
-      );
-      allow delete: if signedIn() && isAdmin();
+      allow read: if signedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update: if signedIn() && isAdmin()
+        && request.resource.data.amount == resource.data.amount
+        && request.resource.data.projectId == resource.data.projectId
+        && request.resource.data.userId == resource.data.userId;
     }
   }
 }
