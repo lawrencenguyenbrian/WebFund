@@ -51,10 +51,12 @@ service cloud.firestore {
     //   `raised == 0` owned by themselves — no pre-approved or pre-funded
     //   documents. Admins may additionally create docs as-is, which is
     //   required by the admin "restore deleted project" flow.
-    // Update: an owner may edit content and set/clear their own delete request,
-    //   but never change status, raised, or userId. Admins may change status,
-    //   adjust raised (on pledge confirmation), or clear a delete request
-    //   (reject).
+    // Update: an owner may edit content, set/clear their own delete request,
+    //   and signal a payout or feature request, but never change status,
+    //   raised, userId, payoutStatus, feeAmount, featured, or featuredUntil.
+    //   Admins may change status, adjust raised (on pledge confirmation),
+    //   confirm payout (payoutStatus/feeAmount), approve feature listings
+    //   (featured/featuredUntil), or clear a delete request (reject).
     // Delete: admins only — removal first copies the doc to deletedProjects.
     match /projects/{projectId} {
       allow read: if resource.data.status == 'approved'
@@ -75,6 +77,10 @@ service cloud.firestore {
           && request.resource.data.userId == resource.data.userId
           && request.resource.data.raised == resource.data.raised
           && request.resource.data.status == resource.data.status
+          && request.resource.data.payoutStatus == resource.data.payoutStatus
+          && request.resource.data.feeAmount == resource.data.feeAmount
+          && request.resource.data.featured == resource.data.featured
+          && request.resource.data.featuredUntil == resource.data.featuredUntil
         )
       );
       allow delete: if signedIn() && isAdmin();

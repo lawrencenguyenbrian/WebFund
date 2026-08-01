@@ -118,6 +118,35 @@
     </div>
   </div>
 
+  <!-- Payment instructions modal -->
+  <div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content" data-bs-theme="dark">
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold" id="paymentModalTitle"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-success py-3 small">
+            <i class="bi bi-check-circle me-1"></i>Yêu cầu đã được gửi! Vui lòng chuyển khoản theo thông tin bên dưới để hoàn tất.
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Số tiền cần chuyển</label>
+            <div class="fw-bold fs-5" id="paymentModalAmount"></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Nội dung chuyển khoản</label>
+            <div class="fw-bold font-monospace small" id="paymentModalContent"></div>
+          </div>
+          <p class="text-muted small mb-0">Quản trị viên sẽ xác nhận sau khi nhận được khoản chuyển.</p>
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1055">
     <div id="toast" class="toast align-items-center text-bg-success border-0" role="alert">

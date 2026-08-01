@@ -138,9 +138,17 @@ function initProjectFeed() {
       const matchStage = state.stage === 'all' || p.stage === state.stage;
       return matchCategory && matchStage;
     });
-    if (state.sort === 'trending') list.sort((a, b) => (b.raised / b.goal) - (a.raised / a.goal));
-    else if (state.sort === 'ending') list.sort((a, b) => a.daysLeft - b.daysLeft);
-    else if (state.sort === 'newest') list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    const now = Date.now();
+    const featuredList = list.filter(p => p.featured && p.featuredUntil?.toDate() > new Date(now));
+    const normalList = list.filter(p => !(p.featured && p.featuredUntil?.toDate() > new Date(now)));
+    const sortList = (arr) => {
+      if (state.sort === 'trending') arr.sort((a, b) => (b.raised / b.goal) - (a.raised / a.goal));
+      else if (state.sort === 'ending') arr.sort((a, b) => a.daysLeft - b.daysLeft);
+      else if (state.sort === 'newest') arr.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    };
+    sortList(featuredList);
+    sortList(normalList);
+    list = featuredList.concat(normalList);
     grid.innerHTML = list.map(renderCard).join('');
     emptyState.hidden = list.length !== 0;
   };
@@ -160,6 +168,7 @@ function renderCard(p) {
         ${p.coverImage ? `<img src="${p.coverImage}" class="card-img-top" alt="${p.name}">` : ''}
         <div class="card-body d-flex flex-column gap-2">
           <div class="d-flex align-items-center gap-1 mb-1 flex-wrap">
+            ${(p.featured && p.featuredUntil?.toDate() > new Date()) ? '<span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Nổi bật</span>' : ''}
             <span class="badge ${stageClass}">${stageLabel}</span>
             ${(p.tags || []).filter(t => t !== stageLabel).slice(0, 3).map(t => `<span class="badge bg-light text-secondary border">${t}</span>`).join('')}
           </div>

@@ -3,6 +3,9 @@ let allPledges = [];
 let allPendingProjects = [];
 let currentFilter = 'all';
 
+const PLATFORM_FEE_PCT = 0.05;
+const FEATURED_DAYS = 7;
+
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
   initAuthUI();
@@ -54,6 +57,8 @@ function checkAdmin(uid) {
         loadPendingProjects();
         loadDeleteRequests();
         loadDeletedProjects();
+        loadPayoutRequests();
+        loadFeaturedRequests();
       } else {
         document.getElementById('loadingState').hidden = true;
         document.getElementById('notAdminState').hidden = false;
@@ -376,6 +381,162 @@ async function rejectDelete(id, btn) {
     });
     loadDeleteRequests();
     showToast('Đã từ chối yêu cầu xóa');
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+function loadPayoutRequests() {
+  db.collection('projects').where('payoutRequestedAt', '!=', null).get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        document.getElementById('emptyPayoutRequests').hidden = false;
+        return;
+      }
+      let list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      list = list.filter(p => p.payoutStatus !== 'paid');
+      if (!list.length) {
+        document.getElementById('emptyPayoutRequests').hidden = false;
+        return;
+      }
+      list.sort((a, b) => (b.payoutRequestedAt?.seconds || 0) - (a.payoutRequestedAt?.seconds || 0));
+      renderPayoutRequests(list);
+    })
+    .catch(() => {
+      document.getElementById('emptyPayoutRequests').hidden = false;
+    });
+}
+
+function renderPayoutRequests(list) {
+  document.getElementById('emptyPayoutRequests').hidden = true;
+  document.getElementById('payoutTable').hidden = false;
+
+  document.getElementById('payoutTableBody').innerHTML = list.map(p => {
+    const requested = p.payoutRequestedAt?.toDate ? p.payoutRequestedAt.toDate().toLocaleString('vi-VN') : '';
+    const feeAmount = Math.round(p.raised * PLATFORM_FEE_PCT);
+
+    return `
+      <tr>
+        <td>
+          <div class="fw-semibold">
+            <a href="project.html?id=${p.id}" class="text-decoration-none">${p.name}</a>
+          </div>
+          <div class="small text-muted">${p.tagline || ''}</div>
+        </td>
+        <td>${p.userName || 'N/A'}</td>
+        <td class="fw-semibold">${formatCurrency(p.raised)}</td>
+        <td class="fw-semibold">${formatCurrency(feeAmount)}</td>
+        <td class="small text-muted">${requested}</td>
+        <td>
+          <button class="btn btn-sm btn-success" onclick="confirmPayout('${p.id}', this)" title="Xác nhận đã nhận phí">
+            <i class="bi bi-check-lg"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function confirmPayout(id, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const snap = await db.collection('projects').doc(id).get();
+    if (!snap.exists) throw new Error('Dự án không tồn tại');
+    const data = snap.data();
+    const feeAmount = Math.round(data.raised * PLATFORM_FEE_PCT);
+
+    await db.collection('projects').doc(id).update({
+      payoutStatus: 'paid',
+      payoutConfirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      feeAmount
+    });
+    loadPayoutRequests();
+    showToast('Đã xác nhận phí, dự án được rút vốn');
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+function loadFeaturedRequests() {
+  db.collection('projects').where('featuredRequested', '!=', null).get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        document.getElementById('emptyFeaturedRequests').hidden = false;
+        return;
+      }
+      let list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      list = list.filter(p => !p.featured);
+      if (!list.length) {
+        document.getElementById('emptyFeaturedRequests').hidden = false;
+        return;
+      }
+      list.sort((a, b) => (b.featuredRequested?.seconds || 0) - (a.featuredRequested?.seconds || 0));
+      renderFeaturedRequests(list);
+    })
+    .catch(() => {
+      document.getElementById('emptyFeaturedRequests').hidden = false;
+    });
+}
+
+function renderFeaturedRequests(list) {
+  document.getElementById('emptyFeaturedRequests').hidden = true;
+  document.getElementById('featuredRequestTable').hidden = false;
+
+  document.getElementById('featuredRequestTableBody').innerHTML = list.map(p => {
+    const requested = p.featuredRequested?.toDate ? p.featuredRequested.toDate().toLocaleString('vi-VN') : '';
+
+    return `
+      <tr>
+        <td>
+          <div class="fw-semibold">
+            <a href="project.html?id=${p.id}" class="text-decoration-none">${p.name}</a>
+          </div>
+          <div class="small text-muted">${p.tagline || ''}</div>
+        </td>
+        <td>${p.userName || 'N/A'}</td>
+        <td class="small text-muted">${requested}</td>
+        <td>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-success" onclick="approveFeature('${p.id}', this)" title="Duyệt nổi bật">
+              <i class="bi bi-check-lg"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="rejectFeature('${p.id}', this)" title="Từ chối yêu cầu">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function approveFeature(id, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const until = new Date(Date.now() + FEATURED_DAYS * 24 * 60 * 60 * 1000);
+    await db.collection('projects').doc(id).update({
+      featured: true,
+      featuredUntil: until,
+      featuredRequested: firebase.firestore.FieldValue.delete()
+    });
+    loadFeaturedRequests();
+    showToast('Đã duyệt dự án nổi bật');
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+async function rejectFeature(id, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await db.collection('projects').doc(id).update({
+      featuredRequested: firebase.firestore.FieldValue.delete()
+    });
+    loadFeaturedRequests();
+    showToast('Đã từ chối yêu cầu nổi bật');
   } catch (e) {
     if (btn) btn.disabled = false;
     showToast('Lỗi: ' + e.message);
