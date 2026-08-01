@@ -1,5 +1,6 @@
 const db = firebase.firestore();
 let allPledges = [];
+let allPendingProjects = [];
 let currentFilter = 'all';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -50,6 +51,8 @@ function checkAdmin(uid) {
         document.getElementById('loadingState').hidden = true;
         document.getElementById('adminContent').hidden = false;
         loadPledges();
+        loadPendingProjects();
+        loadDeleteRequests();
       } else {
         document.getElementById('loadingState').hidden = true;
         document.getElementById('notAdminState').hidden = false;
@@ -206,6 +209,176 @@ function formatCurrency(n) {
   if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + ' tỷ ₫';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(0) + ' tr ₫';
   return (n || 0).toLocaleString('vi-VN') + ' ₫';
+}
+
+function loadPendingProjects() {
+  db.collection('projects').where('status', '==', 'pending').get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        document.getElementById('emptyProjects').hidden = false;
+        return;
+      }
+      allPendingProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      allPendingProjects.sort((a, b) => (b.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+      renderPendingProjects();
+    })
+    .catch(() => {
+      document.getElementById('emptyProjects').hidden = false;
+    });
+}
+
+function renderPendingProjects() {
+  if (!allPendingProjects.length) {
+    document.getElementById('projectTable').hidden = true;
+    document.getElementById('emptyProjects').hidden = false;
+    return;
+  }
+
+  document.getElementById('emptyProjects').hidden = true;
+  document.getElementById('projectTable').hidden = false;
+
+  document.getElementById('projectTableBody').innerHTML = allPendingProjects.map(p => {
+    const created = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString('vi-VN') : '';
+
+    return `
+      <tr>
+        <td>
+          <div class="fw-semibold">
+            <a href="project.html?id=${p.id}" class="text-decoration-none">${p.name}</a>
+          </div>
+          <div class="small text-muted">${p.tagline || ''}</div>
+        </td>
+        <td>${p.userName || 'N/A'}</td>
+        <td class="fw-semibold">${formatCurrency(p.goal)}</td>
+        <td>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-success" onclick="approveProject('${p.id}', this)" title="Duyệt">
+              <i class="bi bi-check-lg"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="rejectProject('${p.id}', this)" title="Từ chối">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <span class="small text-muted ms-1">${created}</span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function approveProject(id, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await db.collection('projects').doc(id).update({ status: 'approved' });
+    allPendingProjects = allPendingProjects.filter(p => p.id !== id);
+    renderPendingProjects();
+    showToast('Đã duyệt dự án');
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+async function rejectProject(id, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await db.collection('projects').doc(id).update({ status: 'rejected' });
+    allPendingProjects = allPendingProjects.filter(p => p.id !== id);
+    renderPendingProjects();
+    showToast('Đã từ chối dự án');
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+function loadDeleteRequests() {
+  db.collection('projects').where('deleteRequested', '!=', null).get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        document.getElementById('emptyDeleteRequests').hidden = false;
+        return;
+      }
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      list.sort((a, b) => (b.deleteRequested?.seconds || 0) - (a.deleteRequested?.seconds || 0));
+      renderDeleteRequests(list);
+    })
+    .catch(() => {
+      document.getElementById('emptyDeleteRequests').hidden = false;
+    });
+}
+
+function renderDeleteRequests(list) {
+  document.getElementById('emptyDeleteRequests').hidden = true;
+  document.getElementById('deleteRequestTable').hidden = false;
+
+  document.getElementById('deleteRequestTableBody').innerHTML = list.map(p => {
+    const requested = p.deleteRequested?.toDate ? p.deleteRequested.toDate().toLocaleString('vi-VN') : '';
+
+    return `
+      <tr>
+        <td>
+          <div class="fw-semibold">
+            <a href="project.html?id=${p.id}" class="text-decoration-none">${p.name}</a>
+          </div>
+          <div class="small text-muted">${p.tagline || ''}</div>
+        </td>
+        <td>${p.userName || 'N/A'}</td>
+        <td class="fw-semibold">${formatCurrency(p.goal)}</td>
+        <td class="small text-muted">${requested}</td>
+        <td>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-danger" onclick="approveDelete('${p.id}', this)" title="Duyệt xóa">
+              <i class="bi bi-trash"></i>
+            </button>
+            <button class="btn btn-sm btn-secondary" onclick="rejectDelete('${p.id}', this)" title="Từ chối yêu cầu">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function approveDelete(id, btn) {
+  if (btn) btn.disabled = true;
+  const user = firebase.auth().currentUser;
+  try {
+    const snap = await db.collection('projects').doc(id).get();
+    if (!snap.exists) throw new Error('Dự án không tồn tại');
+
+    const data = snap.data();
+
+    await db.collection('deletedProjects').doc(id).set({
+      ...data,
+      deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      deletedBy: user.uid,
+      deletedByEmail: user.email || ''
+    });
+
+    await db.collection('projects').doc(id).delete();
+    loadDeleteRequests();
+    showToast('Đã xóa dự án (đã lưu nhật ký)');
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+async function rejectDelete(id, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await db.collection('projects').doc(id).update({
+      deleteRequested: firebase.firestore.FieldValue.delete(),
+      deleteRequestedBy: firebase.firestore.FieldValue.delete()
+    });
+    loadDeleteRequests();
+    showToast('Đã từ chối yêu cầu xóa');
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    showToast('Lỗi: ' + e.message);
+  }
 }
 
 function showToast(msg) {
