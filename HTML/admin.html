@@ -169,6 +169,39 @@
               </div>
             </div>
 
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-5 mb-3">
+              <div>
+                <h2 class="fw-bold mb-1">Dự án đã xóa</h2>
+                <p class="text-muted small mb-0">Nhật ký các dự án đã bị xóa. Có thể khôi phục nếu cần.</p>
+              </div>
+            </div>
+
+            <!-- Empty -->
+            <div id="emptyDeleted" class="text-center py-5" hidden>
+              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-archive"></i></div>
+              <h4>Chưa có dự án nào bị xóa</h4>
+              <p class="text-muted">Nhật ký dự án đã xóa sẽ hiển thị ở đây.</p>
+            </div>
+
+            <!-- Deleted projects table -->
+            <div id="deletedTable" class="admin-table-card" hidden>
+              <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                  <thead>
+                    <tr>
+                      <th>Dự án</th>
+                      <th>Người sáng lập</th>
+                      <th>Mục tiêu</th>
+                      <th>Bị xóa lúc</th>
+                      <th>Người xóa</th>
+                      <th>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="deletedTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
 
         </div>
