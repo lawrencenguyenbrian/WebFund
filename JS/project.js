@@ -183,6 +183,7 @@ function renderProject(p) {
   document.getElementById('projectProgressBar').style.width = pct + '%';
   document.getElementById('projectPct').textContent = pct + '%';
   document.getElementById('projectDaysLeft').textContent = p.daysLeft === 0 ? 'Đã đủ vốn' : `Còn ${p.daysLeft} ngày`;
+  document.getElementById('payoutPaidNote').hidden = !(p.payoutStatus === 'paid');
 
   // Creator
   document.getElementById('creatorName').textContent = p.userName || 'Ẩn danh';

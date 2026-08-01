@@ -1,5 +1,9 @@
 const db = firebase.firestore();
 
+const PLATFORM_FEE_PCT = 0.05;
+const FEATURED_PRICE = 200000;
+const FEATURED_DAYS = 7;
+
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
   initAuthUI();
@@ -118,6 +122,19 @@ function renderProjectList(projects) {
     const lastUpdate = p.lastUpdate;
     const deleting = !!p.deleteRequested;
 
+    const payoutBadge = p.payoutStatus === 'paid'
+      ? '<span class="badge bg-success text-white">Đã rút vốn</span>'
+      : p.payoutRequestedAt
+        ? '<span class="badge bg-warning text-dark" title="Đang chờ quản trị viên xác nhận phí"><i class="bi bi-hourglass-split"></i> Chờ thanh toán phí</span>'
+        : '';
+    const featuredBadge = (p.featured && p.featuredUntil?.toDate() > new Date())
+      ? '<span class="badge bg-info text-dark"><i class="bi bi-star-fill"></i> Nổi bật</span>'
+      : p.featuredRequested
+        ? '<span class="badge bg-info text-dark">Chờ nổi bật</span>'
+        : '';
+    const canRequestPayout = p.raised >= p.goal && !p.payoutRequestedAt && p.payoutStatus !== 'paid';
+    const canRequestFeature = p.status === 'approved' && !p.featuredRequested && !(p.featured && p.featuredUntil?.toDate() > new Date());
+
     let updateHtml = '';
     if (lastUpdate) {
       const date = lastUpdate.createdAt?.toDate ? lastUpdate.createdAt.toDate().toLocaleDateString('vi-VN') : '';
@@ -140,6 +157,8 @@ function renderProjectList(projects) {
           <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <span class="badge ${stageClass[p.stage] || 'bg-secondary'}">${stageMap[p.stage] || p.stage}</span>
             ${statusMap[p.status] ? `<span class="badge ${statusMap[p.status].class}">${statusMap[p.status].label}</span>` : ''}
+            ${payoutBadge}
+            ${featuredBadge}
             ${deleting ? '<span class="badge bg-warning text-dark" title="Đang chờ quản trị viên duyệt"><i class="bi bi-hourglass-split"></i> Chờ xóa</span>' : ''}
             <span class="small text-muted">${daysText}</span>
           </div>
@@ -160,6 +179,8 @@ function renderProjectList(projects) {
           <button class="btn btn-sm btn-outline-secondary open-update-btn" data-id="${p.id}" data-name="${p.name}">
             <i class="bi bi-megaphone"></i>
           </button>
+          ${canRequestPayout ? `<button class="btn btn-sm btn-outline-success request-payout-btn" data-id="${p.id}" data-name="${p.name}" data-email="${p.email || ''}" title="Yêu cầu rút vốn"><i class="bi bi-cash-coin"></i></button>` : ''}
+          ${canRequestFeature ? `<button class="btn btn-sm btn-outline-info request-feature-btn" data-id="${p.id}" data-name="${p.name}" data-email="${p.email || ''}" title="Làm nổi bật dự án"><i class="bi bi-star"></i></button>` : ''}
           ${deleting
             ? `<button class="btn btn-sm btn-outline-secondary cancel-delete-btn" data-id="${p.id}" title="Hủy yêu cầu xóa"><i class="bi bi-x-lg"></i></button>`
             : `<button class="btn btn-sm btn-outline-danger delete-btn" data-id="${p.id}" data-name="${p.name}" title="Yêu cầu xóa"><i class="bi bi-trash"></i></button>`}
@@ -178,6 +199,14 @@ function renderProjectList(projects) {
 
   container.querySelectorAll('.cancel-delete-btn').forEach(btn => {
     btn.addEventListener('click', () => cancelDelete(btn.dataset.id, btn));
+  });
+
+  container.querySelectorAll('.request-payout-btn').forEach(btn => {
+    btn.addEventListener('click', () => requestPayout(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn));
+  });
+
+  container.querySelectorAll('.request-feature-btn').forEach(btn => {
+    btn.addEventListener('click', () => requestFeature(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn));
   });
 }
 
@@ -219,6 +248,55 @@ function openUpdateModal(projectId) {
   document.getElementById('updateContent').value = '';
   document.getElementById('updateError').hidden = true;
   new bootstrap.Modal(document.getElementById('updateModal')).show();
+}
+
+async function requestPayout(projectId, projectName, email, btn) {
+  if (!confirm(`Bạn có chắc muốn yêu cầu rút vốn cho "${projectName}"?\nPhí nền tảng (${PLATFORM_FEE_PCT * 100}%) sẽ được thanh toán trước khi rút vốn.`)) return;
+  btn.disabled = true;
+  try {
+    const snap = await db.collection('projects').doc(projectId).get();
+    if (!snap.exists) throw new Error('Dự án không tồn tại');
+    const p = snap.data();
+    if (p.raised < p.goal || p.payoutRequestedAt || p.payoutStatus === 'paid') {
+      throw new Error('Dự án chưa đủ điều kiện rút vốn');
+    }
+    const feeAmount = Math.round(p.raised * PLATFORM_FEE_PCT);
+    await db.collection('projects').doc(projectId).update({
+      payoutRequestedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    openPaymentModal('Yêu cầu rút vốn', feeAmount, bankTransferContent(projectId, email));
+    showToast('Đã gửi yêu cầu rút vốn, chờ quản trị viên xác nhận phí');
+  } catch (err) {
+    btn.disabled = false;
+    showToast(err.message);
+  }
+}
+
+async function requestFeature(projectId, projectName, email, btn) {
+  if (!confirm(`Bạn có chắc muốn làm nổi bật "${projectName}"?\nPhí ${formatCurrency(FEATURED_PRICE)} giúp dự án xuất hiện nổi bật trong ${FEATURED_DAYS} ngày.`)) return;
+  btn.disabled = true;
+  try {
+    await db.collection('projects').doc(projectId).update({
+      featuredRequested: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    openPaymentModal('Làm nổi bật dự án', FEATURED_PRICE, bankTransferContent(projectId, email));
+    showToast('Đã gửi yêu cầu nổi bật, chờ quản trị viên duyệt');
+  } catch (err) {
+    btn.disabled = false;
+    showToast(err.message);
+  }
+}
+
+function openPaymentModal(title, amount, content) {
+  document.getElementById('paymentModalTitle').textContent = title;
+  document.getElementById('paymentModalAmount').textContent = formatCurrency(amount);
+  document.getElementById('paymentModalContent').textContent = content;
+  new bootstrap.Modal(document.getElementById('paymentModal')).show();
+}
+
+function bankTransferContent(projectId, email) {
+  const user = firebase.auth().currentUser;
+  return `WEBFUND ${projectId.slice(0, 8).toUpperCase()} ${email || (user ? user.email : '')}`;
 }
 
 function showToast(msg) {
