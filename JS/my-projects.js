@@ -179,6 +179,9 @@ function renderProjectList(projects) {
           <button class="btn btn-sm btn-outline-secondary open-update-btn" data-id="${p.id}" data-name="${p.name}">
             <i class="bi bi-megaphone"></i>
           </button>
+          <button class="btn btn-sm btn-outline-secondary backers-btn" data-id="${p.id}" data-name="${p.name}" title="Người ủng hộ">
+            <i class="bi bi-people"></i>
+          </button>
           ${canRequestPayout ? `<button class="btn btn-sm btn-outline-success request-payout-btn" data-id="${p.id}" data-name="${p.name}" data-email="${p.email || ''}" title="Yêu cầu rút vốn"><i class="bi bi-cash-coin"></i></button>` : ''}
           ${canRequestFeature ? `<button class="btn btn-sm btn-outline-info request-feature-btn" data-id="${p.id}" data-name="${p.name}" data-email="${p.email || ''}" title="Làm nổi bật dự án"><i class="bi bi-star"></i></button>` : ''}
           ${deleting
@@ -191,6 +194,10 @@ function renderProjectList(projects) {
 
   container.querySelectorAll('.open-update-btn').forEach(btn => {
     btn.addEventListener('click', () => openUpdateModal(btn.dataset.id));
+  });
+
+  container.querySelectorAll('.backers-btn').forEach(btn => {
+    btn.addEventListener('click', () => openBackersModal(btn.dataset.id, btn.dataset.name));
   });
 
   container.querySelectorAll('.delete-btn').forEach(btn => {
@@ -248,6 +255,40 @@ function openUpdateModal(projectId) {
   document.getElementById('updateContent').value = '';
   document.getElementById('updateError').hidden = true;
   new bootstrap.Modal(document.getElementById('updateModal')).show();
+}
+
+async function openBackersModal(projectId, projectName) {
+  const body = document.getElementById('backersModalBody');
+  document.getElementById('backersModalTitle').textContent = `Người ủng hộ — ${projectName}`;
+  body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+  new bootstrap.Modal(document.getElementById('backersModal')).show();
+
+  try {
+    const snap = await db.collection('pledges')
+      .where('projectId', '==', projectId)
+      .where('status', '==', 'confirmed')
+      .get();
+    const backers = snap.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(p => p.perkTier);
+
+    if (!backers.length) {
+      body.innerHTML = '<p class="text-muted text-center mb-0">Chưa có nhà đầu tư nào nhận đặc quyền.</p>';
+      return;
+    }
+
+    body.innerHTML = backers.map(b => `
+      <div class="d-flex align-items-center justify-content-between gap-2 py-2 border-bottom">
+        <div>
+          <div class="fw-semibold small">${b.userName || 'Ẩn danh'}</div>
+          ${b.amount ? `<div class="small text-muted">${formatCurrency(b.amount)}</div>` : ''}
+        </div>
+        <span class="badge bg-info text-dark">${b.perkTier.title}</span>
+      </div>
+    `).join('');
+  } catch (err) {
+    body.innerHTML = `<p class="text-danger text-center mb-0">Lỗi: ${err.message}</p>`;
+  }
 }
 
 async function requestPayout(projectId, projectName, email, btn) {

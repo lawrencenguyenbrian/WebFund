@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initGalleryUpload();
   initTags();
   initMilestones();
+  initPerkTiers();
   initFormSubmit();
   initPostAnother();
   initAiHelper();
@@ -523,6 +524,73 @@ function getMilestones() {
   return milestones;
 }
 
+/* ── Investor Perk Tiers ── */
+function initPerkTiers() {
+  const container = document.getElementById('perkTiers');
+  const addBtn = document.getElementById('addPerkBtn');
+  if (!container || !addBtn) return;
+
+  function addPerkRow(tier) {
+    const row = document.createElement('div');
+    row.className = 'perk-row mb-3 p-3 border rounded';
+    row.dataset.id = tier && tier.id ? tier.id : generatePerkTierId();
+    row.innerHTML = `
+      <div class="d-flex gap-2 mb-2 align-items-center">
+        <input type="number" class="form-control form-control-sm" placeholder="Mức ủng hộ tối thiểu (đ)" style="flex:1" min="0" value="${tier && tier.minAmount ? tier.minAmount : ''}">
+        <input type="text" class="form-control form-control-sm" placeholder="Tên đặc quyền" style="flex:2" value="${escapeAttr(tier && tier.title || '')}">
+        <button type="button" class="btn btn-sm btn-outline-danger border-0 perk-remove" title="Xóa"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <textarea class="form-control form-control-sm mb-2" rows="2" placeholder="Mô tả">${escapeAttr(tier && tier.description || '')}</textarea>
+      <input type="number" class="form-control form-control-sm" placeholder="Thời hạn (tháng, để trống nếu không giới hạn thời gian)" min="0" value="${tier && tier.durationMonths ? tier.durationMonths : ''}">
+    `;
+    row.querySelector('.perk-remove').addEventListener('click', () => row.remove());
+    container.appendChild(row);
+  }
+
+  addBtn.addEventListener('click', () => {
+    const count = container.querySelectorAll('.perk-row').length;
+    if (count >= 10) { showToast('Tối đa 10 đặc quyền'); return; }
+    addPerkRow(null);
+  });
+
+  container.querySelectorAll('.perk-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (container.querySelectorAll('.perk-row').length > 1) {
+        btn.closest('.perk-row').remove();
+      }
+    });
+  });
+
+  window.setProjectPerkTiers = (list) => {
+    container.querySelectorAll('.perk-row').forEach(el => el.remove());
+    (list || []).forEach(t => addPerkRow(t));
+    if (!container.querySelector('.perk-row')) addPerkRow(null);
+  };
+}
+
+function getPerkTiers() {
+  const rows = document.querySelectorAll('#perkTiers .perk-row');
+  const tiers = [];
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const minAmount = parseInt(inputs[0].value);
+    const title = inputs[1].value.trim();
+    const durationMonths = inputs[2].value ? parseInt(inputs[2].value) : null;
+    const description = row.querySelector('textarea').value.trim();
+    if (title && minAmount > 0) {
+      tiers.push({ id: row.dataset.id, minAmount, title, description, durationMonths });
+    }
+  });
+  tiers.sort((a, b) => a.minAmount - b.minAmount);
+  return tiers;
+}
+
+function generatePerkTierId() {
+  return (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+}
+
 /* ── Edit Mode ── */
 function loadEditMode(user) {
   const params = new URLSearchParams(window.location.search);
@@ -578,6 +646,7 @@ function fillForm(p) {
   document.getElementById('pDaysLeft').value = p.daysLeft || 30;
   document.getElementById('pUseOfFunds').value = p.useOfFunds || '';
   setProjectMilestones(p.milestones || []);
+  setProjectPerkTiers(p.perkTiers || []);
   setProjectStrategies(p.strategies || []);
 
   // Step 4
@@ -796,7 +865,8 @@ function initFormSubmit() {
       url, email, team, useOfFunds,
       strategies,
       socialLinks: Object.keys(socialLinks).length ? socialLinks : null,
-      milestones: getMilestones()
+      milestones: getMilestones(),
+      perkTiers: getPerkTiers()
     };
 
     try {
@@ -851,6 +921,7 @@ function initPostAnother() {
     galleryUrls = [];
     document.getElementById('pCoverUrl').value = '';
     document.getElementById('pGalleryUrls').value = '';
+    setProjectPerkTiers([]);
 
     // Reset cover zone
     const zone = document.getElementById('coverUploadZone');

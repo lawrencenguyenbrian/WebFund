@@ -89,12 +89,25 @@ function renderPledgeList(pledges) {
     const st = statusMap[p.status] || statusMap.pending;
     const created = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString('vi-VN') : '';
 
+    let perkBadge = '';
+    if (p.status === 'confirmed' && p.wantsPerk && p.perkTier) {
+      let text = p.perkTier.title;
+      if (p.perkGrantedUntil) {
+        const until = p.perkGrantedUntil.toDate ? p.perkGrantedUntil.toDate() : new Date(p.perkGrantedUntil);
+        text += until.getTime() > Date.now()
+          ? ` · còn hạn đến ${formatDate(until)}`
+          : ' · đã hết hạn';
+      }
+      perkBadge = `<span class="badge bg-info text-dark">${text}</span>`;
+    }
+
     return `
       <div class="pledge-row">
         <div class="pledge-row-body">
           <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <span class="badge ${st.class}">${st.label}</span>
             <span class="small text-muted">${methodMap[p.method] || p.method}</span>
+            ${perkBadge}
             <span class="small text-muted">${created}</span>
           </div>
           <h6 class="mb-1">
@@ -115,4 +128,9 @@ function formatCurrency(n) {
   if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + ' tỷ ₫';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(0) + ' tr ₫';
   return (n || 0).toLocaleString('vi-VN') + ' ₫';
+}
+
+function formatDate(date) {
+  if (!date) return '';
+  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }

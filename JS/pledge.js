@@ -1,5 +1,7 @@
 const db = firebase.firestore();
 let currentProject = null;
+let wantsPerk = false;
+let selectedPerkTier = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
@@ -7,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadProject();
   initMethodToggle();
   initFormSubmit();
+  initPerkUI();
 });
 
 function initAuthUI() {
@@ -85,6 +88,91 @@ function renderProjectInfo(p) {
   const pct = Math.min(Math.round((p.raised / p.goal) * 100), 100);
   document.getElementById('pledgeProjectProgressBar').style.width = pct + '%';
   document.getElementById('pledgeProjectPct').textContent = `${pct}% · ${formatCurrency(p.raised)} / ${formatCurrency(p.goal)}`;
+
+  renderPerkUI(p);
+}
+
+/* ── Perk Tiers ── */
+function getPerkTier(amount) {
+  const tiers = currentProject.perkTiers || [];
+  return tiers.filter(t => amount >= t.minAmount).sort((a, b) => b.minAmount - a.minAmount)[0] || null;
+}
+
+function getNextPerkTier(amount) {
+  const tiers = currentProject.perkTiers || [];
+  return tiers.filter(t => amount < t.minAmount).sort((a, b) => a.minAmount - b.minAmount)[0] || null;
+}
+
+function initPerkUI() {
+  const perkSection = document.getElementById('perkSection');
+  if (!perkSection) return;
+
+  document.querySelectorAll('input[name="perkChoice"]').forEach(input => {
+    input.addEventListener('change', () => {
+      wantsPerk = input.value === 'claim';
+      updatePerkPreview();
+    });
+  });
+
+  const amountInput = document.getElementById('pledgeAmount');
+  if (amountInput) {
+    amountInput.addEventListener('input', updatePerkPreview);
+  }
+}
+
+function renderPerkUI(p) {
+  const perkSection = document.getElementById('perkSection');
+  if (!perkSection) return;
+
+  const tiers = p.perkTiers || [];
+  if (!tiers.length) {
+    perkSection.hidden = true;
+    wantsPerk = false;
+    selectedPerkTier = null;
+    return;
+  }
+
+  perkSection.hidden = false;
+  wantsPerk = true;
+  selectedPerkTier = null;
+  const claimInput = document.querySelector('input[name="perkChoice"][value="claim"]');
+  if (claimInput) claimInput.checked = true;
+  updatePerkPreview();
+}
+
+function updatePerkPreview() {
+  const matched = document.getElementById('perkPreviewMatched');
+  const empty = document.getElementById('perkPreviewEmpty');
+  if (!matched || !empty) return;
+
+  matched.hidden = true;
+  empty.hidden = true;
+
+  const amountInput = document.getElementById('pledgeAmount');
+  const amount = parseInt(amountInput.value);
+
+  if (!wantsPerk) return;
+
+  const tier = getPerkTier(amount);
+  if (tier) {
+    selectedPerkTier = tier;
+    matched.hidden = false;
+    const duration = tier.durationMonths
+      ? `<div class="small text-muted">Thời hạn: ${tier.durationMonths} tháng</div>`
+      : '';
+    matched.innerHTML = `
+      <div class="fw-semibold">${tier.title}</div>
+      ${tier.description ? `<div class="small text-muted">${tier.description}</div>` : ''}
+      ${duration}
+    `;
+  } else {
+    selectedPerkTier = null;
+    const next = getNextPerkTier(amount || 0);
+    if (next) {
+      empty.hidden = false;
+      empty.textContent = `Ủng hộ thêm ${formatCurrency(next.minAmount - (amount || 0))} để nhận '${next.title}'`;
+    }
+  }
 }
 
 function initMethodToggle() {
@@ -140,6 +228,8 @@ function initFormSubmit() {
       amount: method === 'bank_transfer' ? amount : 0,
       method,
       skill: method === 'skill' ? skill : null,
+      wantsPerk,
+      perkTier: selectedPerkTier,
       note,
       status: 'pending',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()

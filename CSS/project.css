@@ -131,6 +131,16 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 }
 [data-bs-theme="light"] .timeline-dot { border-color: #fff; }
 
+/* ── Perk Tiers ── */
+.perk-tier-item {
+  border-color: #2a3155 !important;
+  background: rgba(255, 255, 255, .03);
+}
+[data-bs-theme="light"] .perk-tier-item {
+  border-color: #dce1ea !important;
+  background: #f8f9fc;
+}
+
 /* ── Sidebar ── */
 .project-sidebar-card {
   background: #1e2440;

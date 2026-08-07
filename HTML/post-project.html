@@ -264,6 +264,23 @@
                   </div>
 
                   <div class="col-12">
+                    <label class="form-label small fw-semibold">Đặc quyền cho nhà đầu tư</label>
+                    <small class="text-muted d-block mb-2">Tự định nghĩa các mức đặc quyền theo khoản ủng hộ. Để trống để chỉ nhận ủng hộ thuần túy.</small>
+                    <div id="perkTiers">
+                      <div class="perk-row mb-3 p-3 border rounded">
+                        <div class="d-flex gap-2 mb-2 align-items-center">
+                          <input type="number" class="form-control form-control-sm" placeholder="Mức ủng hộ tối thiểu (đ)" style="flex:1" min="0">
+                          <input type="text" class="form-control form-control-sm" placeholder="Tên đặc quyền" style="flex:2">
+                          <button type="button" class="btn btn-sm btn-outline-danger border-0 perk-remove" title="Xóa"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                        <textarea class="form-control form-control-sm mb-2" rows="2" placeholder="Mô tả"></textarea>
+                        <input type="number" class="form-control form-control-sm" placeholder="Thời hạn (tháng, để trống nếu không giới hạn thời gian)" min="0">
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="addPerkBtn">+ Thêm đặc quyền</button>
+                  </div>
+
+                  <div class="col-12">
                     <label class="form-label small fw-semibold">Chiến lược gọi vốn</label>
                     <div class="row g-2">
                       <div class="col-sm-4">
