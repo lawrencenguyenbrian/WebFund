@@ -832,6 +832,7 @@ function initFormSubmit() {
       document.getElementById('stepNav').style.display = 'none';
       document.getElementById('navButtons').style.display = 'none';
     } catch (e) {
+      console.error('Lưu dự án thất bại:', e);
       showErr(err, 'Không thể đăng dự án, vui lòng thử lại');
       submitBtn.disabled = false;
       submitText.textContent = editingProjectId ? 'Lưu thay đổi' : 'Đăng dự án';

@@ -19,6 +19,14 @@ service cloud.firestore {
       return role == 'founder' || role == 'investor';
     }
 
+    // Returns the field value, or null when the field is absent. Accessing a
+    // missing field directly yields 'undefined' in rules, and comparing an
+    // undefined value errors the whole rule (deny), so owner edits would be
+    // rejected on projects that never stored these optional fields.
+    function fieldOrNull(map, key) {
+      return key in map ? map[key] : null;
+    }
+
     // ── users ──
     // Any signed-in user may read any user doc (for founder/investor names).
     // A user creates/updates their own doc and may pick founder/investor, but
@@ -77,10 +85,10 @@ service cloud.firestore {
           && request.resource.data.userId == resource.data.userId
           && request.resource.data.raised == resource.data.raised
           && request.resource.data.status == resource.data.status
-          && request.resource.data.payoutStatus == resource.data.payoutStatus
-          && request.resource.data.feeAmount == resource.data.feeAmount
-          && request.resource.data.featured == resource.data.featured
-          && request.resource.data.featuredUntil == resource.data.featuredUntil
+          && fieldOrNull(request.resource.data, 'payoutStatus') == fieldOrNull(resource.data, 'payoutStatus')
+          && fieldOrNull(request.resource.data, 'feeAmount') == fieldOrNull(resource.data, 'feeAmount')
+          && fieldOrNull(request.resource.data, 'featured') == fieldOrNull(resource.data, 'featured')
+          && fieldOrNull(request.resource.data, 'featuredUntil') == fieldOrNull(resource.data, 'featuredUntil')
         )
       );
       allow delete: if signedIn() && isAdmin();
