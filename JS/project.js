@@ -228,7 +228,7 @@ function renderProject(p) {
   // Strategies
   if (p.strategies && p.strategies.length) {
     document.getElementById('strategiesSection').hidden = false;
-    const stratLabels = { crowdfund: 'Góp vốn cộng đồng', angel: 'Nhà đầu tư thiên thần', skill: 'Đổi kỹ năng lấy cổ phần' };
+    const stratLabels = { crowdfund: 'Góp vốn cộng đồng', skill: 'Nhận góp kỹ năng' };
     document.getElementById('projectStrategies').innerHTML = p.strategies.map(s =>
       `<span class="badge bg-primary bg-opacity-10 text-primary">${stratLabels[s] || s}</span>`
     ).join('');

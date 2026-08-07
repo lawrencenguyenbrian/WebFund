@@ -181,10 +181,27 @@ function initMethodToggle() {
       document.querySelectorAll('.method-card').forEach(c => c.style.opacity = '0.5');
       card.style.opacity = '1';
       const isSkill = card.querySelector('input').value === 'skill';
-      document.getElementById('skillInputWrapper').hidden = !isSkill;
+      applyMethod(isSkill);
     });
   });
   document.getElementById('methodBank').style.opacity = '1';
+}
+
+function applyMethod(isSkill) {
+  const amountWrapper = document.getElementById('amountWrapper');
+  const skillInputWrapper = document.getElementById('skillInputWrapper');
+  const perkSection = document.getElementById('perkSection');
+
+  if (amountWrapper) amountWrapper.hidden = isSkill;
+  if (skillInputWrapper) skillInputWrapper.hidden = !isSkill;
+
+  if (isSkill) {
+    wantsPerk = false;
+    selectedPerkTier = null;
+    if (perkSection) perkSection.hidden = true;
+  } else if (currentProject) {
+    renderPerkUI(currentProject);
+  }
 }
 
 function initFormSubmit() {
@@ -202,7 +219,7 @@ function initFormSubmit() {
     const note = document.getElementById('pledgeNote').value.trim();
     const skill = document.getElementById('pledgeSkill').value.trim();
 
-    if (!amount || amount < 100000) {
+    if (method === 'bank_transfer' && (!amount || amount < 100000)) {
       showErr(err, 'Số tiền cam kết phải lớn hơn 100.000đ');
       return;
     }
@@ -242,8 +259,16 @@ function initFormSubmit() {
       document.getElementById('pledgeContent').hidden = true;
       document.getElementById('pledgeSuccess').hidden = false;
 
-      document.getElementById('bankTransferContent').textContent = `WEBFUND ${currentProject.id.slice(0, 8).toUpperCase()} ${user.email}`;
-      document.getElementById('bankTransferAmount').textContent = formatCurrency(amount);
+      const isSkill = method === 'skill';
+      document.getElementById('pledgeSuccessDesc').textContent = isSkill
+        ? 'Cảm ơn bạn đã đăng ký góp kỹ năng. Nhóm dự án sẽ liên hệ với bạn trong thời gian sớm nhất.'
+        : 'Cảm ơn bạn đã ủng hộ dự án. Vui lòng chuyển khoản theo thông tin bên dưới.';
+      document.getElementById('bankInfoBlock').hidden = isSkill;
+      document.getElementById('bankTransferNote').hidden = isSkill;
+      if (!isSkill) {
+        document.getElementById('bankTransferContent').textContent = `WEBFUND ${currentProject.id.slice(0, 8).toUpperCase()} ${user.email}`;
+        document.getElementById('bankTransferAmount').textContent = formatCurrency(amount);
+      }
 
       document.title = `Cam kết thành công — WebFund`;
     } catch (e) {
