@@ -117,7 +117,7 @@ function renderProjectList(projects) {
       approved: { label: 'Đã duyệt', class: 'bg-success text-white' },
       rejected: { label: 'Từ chối', class: 'bg-danger text-white' }
     };
-    const daysText = p.raised >= p.goal ? 'Đã đủ vốn' : `Còn ${p.daysLeft} ngày`;
+    const daysText = p.raised >= p.goal ? 'Đã đủ vốn' : `Còn ${getDaysLeft(p)} ngày`;
     const created = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString('vi-VN') : '';
     const lastUpdate = p.lastUpdate;
     const deleting = !!p.deleteRequested;
@@ -351,4 +351,13 @@ function formatCurrency(n) {
   if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + ' tỷ ₫';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(0) + ' tr ₫';
   return (n || 0).toLocaleString('vi-VN') + ' ₫';
+}
+
+function getDaysLeft(p) {
+  const now = Date.now();
+  if (p.deadline) {
+    const deadline = p.deadline.toDate ? p.deadline.toDate() : new Date(p.deadline);
+    return Math.max(0, Math.ceil((deadline.getTime() - now) / (24 * 60 * 60 * 1000)));
+  }
+  return Math.max(0, p.daysLeft || 0);
 }

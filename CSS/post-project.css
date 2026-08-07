@@ -486,6 +486,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   display: none;
 }
 .error-toast.show { display: block; }
+.error-toast.success { background: #198754; box-shadow: 0 8px 24px rgba(25, 135, 84, .3); }
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
