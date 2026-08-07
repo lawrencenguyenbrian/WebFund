@@ -96,6 +96,24 @@
 
               <form id="pledgeForm" novalidate>
                 <div class="mb-3">
+                  <label class="form-label small fw-semibold">Phương thức góp vốn <span class="text-danger">*</span></label>
+                  <div class="d-flex gap-2">
+                    <label class="method-card flex-fill" id="methodBank">
+                      <input type="radio" name="pledgeMethod" value="bank_transfer" class="d-none" checked>
+                      <div class="method-icon"><i class="bi bi-bank"></i></div>
+                      <div class="method-title">Chuyển khoản</div>
+                      <div class="method-desc">Chuyển khoản ngân hàng</div>
+                    </label>
+                    <label class="method-card flex-fill" id="methodSkill">
+                      <input type="radio" name="pledgeMethod" value="skill" class="d-none">
+                      <div class="method-icon"><i class="bi bi-laptop"></i></div>
+                      <div class="method-title">Góp kỹ năng</div>
+                      <div class="method-desc">Đóng góp công sức, kỹ năng</div>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="mb-3" id="amountWrapper">
                   <label class="form-label small fw-semibold">Số tiền cam kết (VNĐ) <span class="text-danger">*</span></label>
                   <input type="number" class="form-control" id="pledgeAmount" min="100000" step="50000" required placeholder="VD: 5000000">
                   <small class="text-muted">Tối thiểu 100.000đ</small>
@@ -122,24 +140,6 @@
                   <div class="perk-preview mt-3">
                     <div class="perk-preview-matched" id="perkPreviewMatched"></div>
                     <div class="small text-muted" id="perkPreviewEmpty"></div>
-                  </div>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label small fw-semibold">Phương thức góp vốn <span class="text-danger">*</span></label>
-                  <div class="d-flex gap-2">
-                    <label class="method-card flex-fill" id="methodBank">
-                      <input type="radio" name="pledgeMethod" value="bank_transfer" class="d-none" checked>
-                      <div class="method-icon"><i class="bi bi-bank"></i></div>
-                      <div class="method-title">Chuyển khoản</div>
-                      <div class="method-desc">Chuyển khoản ngân hàng</div>
-                    </label>
-                    <label class="method-card flex-fill" id="methodSkill">
-                      <input type="radio" name="pledgeMethod" value="skill" class="d-none">
-                      <div class="method-icon"><i class="bi bi-laptop"></i></div>
-                      <div class="method-title">Góp kỹ năng</div>
-                      <div class="method-desc">Đóng góp công sức, kỹ năng</div>
-                    </label>
                   </div>
                 </div>
 
@@ -170,9 +170,9 @@
             <div class="pledge-success-card text-center">
               <div class="success-icon"><i class="bi bi-check-lg"></i></div>
               <h3 class="fw-bold mb-2">Cam kết thành công!</h3>
-              <p class="text-muted mb-4">Cảm ơn bạn đã ủng hộ dự án. Vui lòng chuyển khoản theo thông tin bên dưới.</p>
+              <p class="text-muted mb-4" id="pledgeSuccessDesc">Cảm ơn bạn đã ủng hộ dự án. Vui lòng chuyển khoản theo thông tin bên dưới.</p>
 
-              <div class="bank-info text-start">
+              <div class="bank-info text-start" id="bankInfoBlock">
                 <h6 class="small text-muted text-uppercase mb-3">Thông tin chuyển khoản</h6>
                 <div class="bank-row">
                   <span class="bank-label">Ngân hàng</span>
@@ -196,7 +196,7 @@
                 </div>
               </div>
 
-              <div class="alert alert-info small mt-4 mb-0">
+              <div class="alert alert-info small mt-4 mb-0" id="bankTransferNote">
                 <strong>Lưu ý:</strong> Vui lòng ghi đúng nội dung chuyển khoản để hệ thống xác nhận tự động.
               </div>
 

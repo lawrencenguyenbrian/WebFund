@@ -574,6 +574,7 @@ function getPerkTiers() {
   const rows = document.querySelectorAll('#perkTiers .perk-row');
   const tiers = [];
   rows.forEach(row => {
+    row.dataset.id = row.dataset.id || generatePerkTierId();
     const inputs = row.querySelectorAll('input');
     const minAmount = parseInt(inputs[0].value);
     const title = inputs[1].value.trim();
@@ -638,6 +639,7 @@ function fillForm(p) {
   setProjectTags(initialTags);
 
   // Step 2
+  coverImageUrl = p.coverImage || '';
   if (p.coverImage) setCoverPreview(p.coverImage);
   galleryUrls = p.gallery || [];
   document.getElementById('pCoverUrl').value = p.coverImage || '';
@@ -667,7 +669,7 @@ function fillForm(p) {
 }
 
 function setProjectStrategies(list) {
-  const map = { crowdfund: 'stratCrowdfund', angel: 'stratAngel', skill: 'stratSkill' };
+  const map = { crowdfund: 'stratCrowdfund', skill: 'stratSkill' };
   for (const key in map) {
     const el = document.getElementById(map[key]);
     if (el) el.checked = (list || []).includes(key);
@@ -847,7 +849,6 @@ function initFormSubmit() {
 
     const strategies = [];
     if (document.getElementById('stratCrowdfund').checked) strategies.push('crowdfund');
-    if (document.getElementById('stratAngel').checked) strategies.push('angel');
     if (document.getElementById('stratSkill').checked) strategies.push('skill');
 
     const socialLinks = {};
