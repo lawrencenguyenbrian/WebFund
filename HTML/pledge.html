@@ -101,6 +101,30 @@
                   <small class="text-muted">Tối thiểu 100.000đ</small>
                 </div>
 
+                <!-- Perk section (only shown when project has perk tiers) -->
+                <div class="mb-3" id="perkSection" hidden>
+                  <label class="form-label small fw-semibold">Chọn hình thức ủng hộ</label>
+                  <div class="d-flex gap-2">
+                    <label class="method-card flex-fill" id="perkOptionNone">
+                      <input type="radio" name="perkChoice" value="none" class="d-none">
+                      <div class="method-icon"><i class="bi bi-heart"></i></div>
+                      <div class="method-title">Chỉ ủng hộ</div>
+                      <div class="method-desc">100% khoản ủng hộ dành cho dự án</div>
+                    </label>
+                    <label class="method-card flex-fill" id="perkOptionClaim">
+                      <input type="radio" name="perkChoice" value="claim" class="d-none" checked>
+                      <div class="method-icon"><i class="bi bi-gift"></i></div>
+                      <div class="method-title">Nhận đặc quyền</div>
+                      <div class="method-desc">Nhận phần thưởng theo mức ủng hộ</div>
+                    </label>
+                  </div>
+
+                  <div class="perk-preview mt-3">
+                    <div class="perk-preview-matched" id="perkPreviewMatched"></div>
+                    <div class="small text-muted" id="perkPreviewEmpty"></div>
+                  </div>
+                </div>
+
                 <div class="mb-3">
                   <label class="form-label small fw-semibold">Phương thức góp vốn <span class="text-danger">*</span></label>
                   <div class="d-flex gap-2">

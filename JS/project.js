@@ -149,6 +149,21 @@ function renderProject(p) {
     `).join('');
   }
 
+  // Investor perk tiers
+  if (p.perkTiers && p.perkTiers.length) {
+    document.getElementById('perkTiersSection').hidden = false;
+    document.getElementById('projectPerkTiers').innerHTML = p.perkTiers.map(t => `
+      <div class="perk-tier-item p-2 rounded border">
+        <div class="d-flex justify-content-between align-items-baseline gap-2">
+          <div class="small fw-semibold">${t.title}</div>
+          <span class="small fw-semibold text-primary">${formatCurrency(t.minAmount)}</span>
+        </div>
+        ${t.description ? `<div class="small text-muted">${t.description}</div>` : ''}
+        ${t.durationMonths ? `<div class="small text-muted">Thời hạn: ${t.durationMonths} tháng</div>` : ''}
+      </div>
+    `).join('');
+  }
+
   // Team
   if (p.team) {
     document.getElementById('teamSection').hidden = false;

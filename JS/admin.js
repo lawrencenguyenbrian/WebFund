@@ -147,7 +147,10 @@ function renderPledges() {
         </td>
         <td class="fw-semibold">${p.amount ? formatCurrency(p.amount) : '<span class="text-muted">Kỹ năng</span>'}</td>
         <td>${methodMap[p.method] || p.method}</td>
-        <td><span class="badge ${st.class}">${st.label}</span></td>
+        <td>
+          <span class="badge ${st.class}">${st.label}</span>
+          ${p.wantsPerk && p.perkTier ? `<span class="badge bg-info text-dark d-block mt-1">${p.perkTier.title}</span>` : ''}
+        </td>
         <td>
           ${p.status === 'pending' ? `
             <div class="d-flex gap-1">
@@ -179,7 +182,11 @@ async function confirmPledge(id, btn) {
       const data = pledgeSnap.data();
       if (data.status !== 'pending') throw new Error('Pledge đã được xử lý trước đó');
 
-      tx.update(pledgeRef, { status: 'confirmed' });
+      const updateData = { status: 'confirmed' };
+      if (data.wantsPerk && data.perkTier && data.perkTier.durationMonths) {
+        updateData.perkGrantedUntil = new Date(Date.now() + data.perkTier.durationMonths * 30 * 24 * 60 * 60 * 1000);
+      }
+      tx.update(pledgeRef, updateData);
 
       if (data.amount && data.projectId) {
         tx.update(db.collection('projects').doc(data.projectId), {
