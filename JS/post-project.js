@@ -164,6 +164,8 @@ function validateStep(step) {
   if (step === 3) {
     const goal = parseInt(document.getElementById('pGoal').value);
     if (!goal || goal < 1000000) { showErr(err, 'Mục tiêu gọi vốn phải lớn hơn 1.000.000đ'); return false; }
+    const daysLeft = parseInt(document.getElementById('pDaysLeft').value);
+    if (daysLeft && (daysLeft < 1 || daysLeft > 90)) { showErr(err, 'Số ngày còn lại phải từ 1 đến 90'); return false; }
   }
 
   if (step === 4) {
@@ -575,7 +577,8 @@ function getPerkTiers() {
     const inputs = row.querySelectorAll('input');
     const minAmount = parseInt(inputs[0].value);
     const title = inputs[1].value.trim();
-    const durationMonths = inputs[2].value ? parseInt(inputs[2].value) : null;
+    let durationMonths = inputs[2].value ? parseInt(inputs[2].value) : null;
+    if (durationMonths && durationMonths < 1) durationMonths = null;
     const description = row.querySelector('textarea').value.trim();
     if (title && minAmount > 0) {
       tiers.push({ id: row.dataset.id, minAmount, title, description, durationMonths });
@@ -727,7 +730,7 @@ function initAiHelper() {
         if (!input || !aiSuggestion || !aiSuggestion[key]) return;
         input.value = aiSuggestion[key].slice(0, AI_FIELD_LIMITS[field]);
         updateCharCounters();
-        showToast('Đã áp dụng gợi ý');
+        showToast('Đã áp dụng gợi ý', 'success');
       });
     });
   }
@@ -830,7 +833,7 @@ function initFormSubmit() {
     const category = document.getElementById('pCategory').value;
     const stage = document.getElementById('pStage').value;
     const goal = parseInt(document.getElementById('pGoal').value);
-    const daysLeft = parseInt(document.getElementById('pDaysLeft').value) || 30;
+    const daysLeft = Math.min(Math.max(parseInt(document.getElementById('pDaysLeft').value) || 30, 1), 90);
     const url = document.getElementById('pUrl').value.trim();
     const email = document.getElementById('pEmail').value.trim();
     const team = document.getElementById('pTeam').value.trim();
@@ -860,6 +863,7 @@ function initFormSubmit() {
     const baseProject = {
       name, tagline, desc, category, stage, tags,
       goal, daysLeft,
+      deadline: firebase.firestore.Timestamp.fromMillis(Date.now() + daysLeft * 24 * 60 * 60 * 1000),
       coverImage: coverImageUrl,
       gallery: galleryUrls,
       url, email, team, useOfFunds,
@@ -957,9 +961,10 @@ function showErr(el, msg) {
   setTimeout(() => el.hidden = true, 4000);
 }
 
-function showToast(msg) {
+function showToast(msg, type) {
   const toast = document.getElementById('errorToast');
   toast.textContent = msg;
+  toast.classList.toggle('success', type === 'success');
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 4000);
 }

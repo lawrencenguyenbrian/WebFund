@@ -143,7 +143,7 @@ function initProjectFeed() {
     const normalList = list.filter(p => !(p.featured && p.featuredUntil?.toDate() > new Date(now)));
     const sortList = (arr) => {
       if (state.sort === 'trending') arr.sort((a, b) => (b.raised / b.goal) - (a.raised / a.goal));
-      else if (state.sort === 'ending') arr.sort((a, b) => a.daysLeft - b.daysLeft);
+      else if (state.sort === 'ending') arr.sort((a, b) => getDaysLeft(a) - getDaysLeft(b));
       else if (state.sort === 'newest') arr.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     };
     sortList(featuredList);
@@ -160,7 +160,7 @@ function renderCard(p) {
   const pct = Math.min(Math.round((p.raised / p.goal) * 100), 100);
   const stageLabel = { idea: 'Idea', mvp: 'MVP', growth: 'Growth', scale: 'Scale' }[p.stage];
   const stageClass = { idea: 'bg-warning text-dark', mvp: 'bg-primary text-white', growth: 'bg-info text-dark', scale: 'bg-info text-dark' }[p.stage];
-  const daysText = p.raised >= p.goal ? 'Đã đủ vốn' : `Còn ${p.daysLeft} ngày`;
+  const daysText = p.raised >= p.goal ? 'Đã đủ vốn' : `Còn ${getDaysLeft(p)} ngày`;
 
   return `
     <div class="col-md-6 col-lg-4">
@@ -192,6 +192,15 @@ function formatCurrency(n) {
   if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + ' tỷ đ';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(0) + ' tr đ';
   return formatNumber(n) + ' đ';
+}
+
+function getDaysLeft(p) {
+  const now = Date.now();
+  if (p.deadline) {
+    const deadline = p.deadline.toDate ? p.deadline.toDate() : new Date(p.deadline);
+    return Math.max(0, Math.ceil((deadline.getTime() - now) / (24 * 60 * 60 * 1000)));
+  }
+  return Math.max(0, p.daysLeft || 0);
 }
 
 function showErr(el, msg) {

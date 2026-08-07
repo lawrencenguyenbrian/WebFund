@@ -2,6 +2,7 @@ const db = firebase.firestore();
 let currentProject = null;
 let currentUser = null;
 let currentUserRole = null;
+let countdownTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
@@ -197,7 +198,8 @@ function renderProject(p) {
   document.getElementById('projectGoal').textContent = `mục tiêu ${formatCurrency(p.goal)}`;
   document.getElementById('projectProgressBar').style.width = pct + '%';
   document.getElementById('projectPct').textContent = pct + '%';
-  document.getElementById('projectDaysLeft').textContent = p.daysLeft === 0 ? 'Đã đủ vốn' : `Còn ${p.daysLeft} ngày`;
+  const daysLeft = getDaysLeft(p);
+  document.getElementById('projectDaysLeft').textContent = daysLeft === 0 ? 'Đã đủ vốn' : `Còn ${daysLeft} ngày`;
   document.getElementById('payoutPaidNote').hidden = !(p.payoutStatus === 'paid');
 
   // Creator
@@ -234,6 +236,16 @@ function renderProject(p) {
 
   // Pledge button
   document.getElementById('pledgeBtn').href = `pledge.html?id=${p.id}`;
+
+  // Live countdown (refresh every minute while the page is open)
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = null;
+  if (p.deadline) {
+    countdownTimer = setInterval(() => {
+      const left = getDaysLeft(p);
+      document.getElementById('projectDaysLeft').textContent = left === 0 ? 'Đã đủ vốn' : `Còn ${left} ngày`;
+    }, 60 * 1000);
+  }
 
   if (currentUser) checkOwner(currentUser.uid);
 }
@@ -282,4 +294,13 @@ function formatDate(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function getDaysLeft(p) {
+  const now = Date.now();
+  if (p.deadline) {
+    const deadline = p.deadline.toDate ? p.deadline.toDate() : new Date(p.deadline);
+    return Math.max(0, Math.ceil((deadline.getTime() - now) / (24 * 60 * 60 * 1000)));
+  }
+  return Math.max(0, p.daysLeft || 0);
 }
