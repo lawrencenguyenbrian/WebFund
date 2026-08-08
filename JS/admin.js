@@ -2,6 +2,7 @@ const db = firebase.firestore();
 let allPledges = [];
 let allPendingProjects = [];
 let allVerificationRequests = [];
+let verificationProfiles = {};
 let verifiedUserIds = new Set();
 let currentFilter = 'all';
 
@@ -251,7 +252,11 @@ function loadVerificationRequests() {
       }
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       list.sort((a, b) => (b.submittedAt?.seconds || 0) - (a.submittedAt?.seconds || 0));
-      renderVerificationRequests(list);
+      return Promise.all(list.map(r =>
+        db.collection('users').doc(r.userId).get()
+          .then(doc => { verificationProfiles[r.userId] = doc.exists ? doc.data() : null; })
+          .catch(() => { verificationProfiles[r.userId] = null; })
+      )).then(() => renderVerificationRequests(list));
     })
     .catch(() => {
       document.getElementById('emptyVerification').hidden = false;
@@ -265,11 +270,14 @@ function renderVerificationRequests(list) {
 
   document.getElementById('verificationTableBody').innerHTML = list.map(r => {
     const submitted = r.submittedAt?.toDate ? r.submittedAt.toDate().toLocaleString('vi-VN') : '';
+    const profile = verificationProfiles[r.userId] || {};
+    const roleLabel = profile.role === 'investor' ? 'Nhà đầu tư' : profile.role === 'admin' ? 'Admin' : 'Founder';
     return `
       <tr>
         <td>
-          <div class="fw-semibold">${r.userName || 'N/A'}</div>
+          <div class="fw-semibold">${r.userName || 'N/A'}${profile.verified ? ' <i class="bi bi-patch-check-fill text-primary" title="Đã xác minh"></i>' : ''}</div>
           <div class="small text-muted">${r.userEmail || ''}</div>
+          <span class="badge ${profile.role === 'admin' ? 'bg-danger' : 'bg-primary-subtle text-primary'}">${roleLabel}</span>
         </td>
         <td>
           ${r.idPhotoUrl
@@ -279,6 +287,9 @@ function renderVerificationRequests(list) {
         <td class="small text-muted">${submitted}</td>
         <td>
           <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-primary" onclick="viewVerificationProfile('${r.userId}')" title="Xem hồ sơ">
+              <i class="bi bi-person"></i>
+            </button>
             <button class="btn btn-sm btn-success" onclick="approveVerification('${r.userId}', this)" title="Duyệt">
               <i class="bi bi-check-lg"></i>
             </button>
@@ -292,11 +303,60 @@ function renderVerificationRequests(list) {
   }).join('');
 }
 
+function viewVerificationProfile(uid) {
+  const p = verificationProfiles[uid] || {};
+  const req = allVerificationRequests.find(r => r.id === uid) || {};
+
+  const avatarEl = document.getElementById('vpAvatar');
+  if (p.avatarUrl) {
+    avatarEl.innerHTML = `<img src="${p.avatarUrl}" alt="Ảnh đại diện">`;
+  } else {
+    avatarEl.textContent = (p.name || req.userName || 'U')[0].toUpperCase();
+  }
+
+  document.getElementById('vpName').innerHTML = (p.name || req.userName || '—')
+    + (p.verified ? ' <i class="bi bi-patch-check-fill text-primary" title="Đã xác minh"></i>' : '');
+  document.getElementById('vpEmail').textContent = p.email || req.userEmail || '—';
+
+  const roleMap = {
+    founder: { label: 'Founder', cls: 'bg-primary' },
+    investor: { label: 'Nhà đầu tư', cls: 'bg-primary' },
+    admin: { label: 'Admin', cls: 'bg-danger' }
+  };
+  const role = roleMap[p.role] || { label: '—', cls: 'bg-secondary' };
+  document.getElementById('vpRole').textContent = role.label;
+  document.getElementById('vpRole').className = 'badge ' + role.cls;
+
+  document.getElementById('vpBio').textContent = p.bio || '—';
+  document.getElementById('vpLocation').textContent = p.location || '—';
+  document.getElementById('vpWebsite').innerHTML = p.website
+    ? `<a href="${p.website}" target="_blank" rel="noopener" class="text-decoration-none">${p.website}</a>`
+    : '—';
+
+  const social = p.socialLinks || {};
+  const socialParts = [];
+  if (social.facebook) socialParts.push(`<a href="${social.facebook}" target="_blank" rel="noopener" class="text-decoration-none"><i class="bi bi-facebook"></i> Facebook</a>`);
+  if (social.linkedin) socialParts.push(`<a href="${social.linkedin}" target="_blank" rel="noopener" class="text-decoration-none"><i class="bi bi-linkedin"></i> LinkedIn</a>`);
+  document.getElementById('vpSocial').innerHTML = socialParts.length ? socialParts.join(' · ') : '—';
+
+  const createdAt = p.createdAt;
+  document.getElementById('vpJoined').textContent = createdAt
+    ? (createdAt.toDate ? createdAt.toDate() : new Date(createdAt)).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : '—';
+
+  document.getElementById('vpUid').textContent = uid;
+
+  const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('verificationProfileModal'));
+  modal.show();
+}
+
 function viewVerificationPhoto(uid) {
   const req = allVerificationRequests.find(r => r.id === uid);
   if (!req?.idPhotoUrl) return;
   document.getElementById('verificationPhotoFull').src = req.idPhotoUrl;
-  new bootstrap.Modal(document.getElementById('verificationPhotoModal')).show();
+  const modalEl = document.getElementById('verificationPhotoModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  modal.show();
 }
 
 async function approveVerification(uid, btn) {
