@@ -12,12 +12,26 @@ const FEATURED_DAYS = 7;
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
   initAuthUI();
+  initAdminTabs();
   initFilters();
 });
+
+function initAdminTabs() {
+  document.querySelectorAll('.admin-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      document.querySelectorAll('.admin-section').forEach(s => { s.hidden = true; });
+      const target = document.getElementById(btn.dataset.section);
+      if (target) target.hidden = false;
+    });
+  });
+}
 
 function initAuthUI() {
   const userMenu = document.getElementById('userMenu');
   const userDropdown = document.getElementById('userDropdown');
+  const createProjectLink = document.getElementById('createProjectLink');
   const myProjectsLink = document.getElementById('myProjectsLink');
   const portfolioLink = document.getElementById('portfolioLink');
   const adminLink = document.getElementById('adminLink');
@@ -31,10 +45,16 @@ function initAuthUI() {
 
       db.collection('users').doc(user.uid).get().then(doc => {
         const role = doc.exists ? doc.data().role : null;
-        if (role === 'investor') {
+        if (role === 'admin') {
+          if (createProjectLink) createProjectLink.style.display = 'none';
+          if (myProjectsLink) myProjectsLink.style.display = 'none';
+          if (portfolioLink) portfolioLink.style.display = 'none';
+        } else if (role === 'investor') {
+          if (createProjectLink) createProjectLink.style.display = 'none';
           if (myProjectsLink) myProjectsLink.style.display = 'none';
           if (portfolioLink) portfolioLink.style.display = 'block';
         } else {
+          if (createProjectLink) createProjectLink.style.display = 'block';
           if (myProjectsLink) myProjectsLink.style.display = 'block';
           if (portfolioLink) portfolioLink.style.display = 'none';
         }
@@ -124,7 +144,7 @@ function initFilters() {
 }
 
 function updateFilterBtns(active) {
-  document.querySelectorAll('.admin-hero .btn').forEach(b => b.classList.remove('is-active'));
+  document.querySelectorAll('.admin-section-head .btn').forEach(b => b.classList.remove('is-active'));
   active.classList.add('is-active');
 }
 

@@ -19,6 +19,7 @@ function initAuthUI() {
   const userMenu = document.getElementById('userMenu');
   const userDropdown = document.getElementById('userDropdown');
   const createBtn = document.getElementById('createProjectBtn');
+  const createProjectLink = document.getElementById('createProjectLink');
   const myProjectsLink = document.getElementById('myProjectsLink');
   const portfolioLink = document.getElementById('portfolioLink');
   const adminLink = document.getElementById('adminLink');
@@ -37,11 +38,18 @@ function initAuthUI() {
 
     db.collection('users').doc(user.uid).get().then(doc => {
       currentUserRole = doc.exists ? doc.data().role : null;
-      if (currentUserRole === 'investor') {
+      if (currentUserRole === 'admin') {
+        createBtn.style.display = 'inline-block';
+        if (createProjectLink) createProjectLink.style.display = 'none';
+        if (myProjectsLink) myProjectsLink.style.display = 'none';
+        if (portfolioLink) portfolioLink.style.display = 'none';
+      } else if (currentUserRole === 'investor') {
         createBtn.style.display = 'none';
+        if (createProjectLink) createProjectLink.style.display = 'none';
         if (myProjectsLink) myProjectsLink.style.display = 'none';
         if (portfolioLink) portfolioLink.style.display = 'block';
       } else {
+        if (createProjectLink) createProjectLink.style.display = 'block';
         if (myProjectsLink) myProjectsLink.style.display = 'block';
         if (portfolioLink) portfolioLink.style.display = 'none';
       }

@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function initAuthUI() {
   const userMenu = document.getElementById('userMenu');
   const userDropdown = document.getElementById('userDropdown');
+  const createProjectLink = document.getElementById('createProjectLink');
   const myProjectsLink = document.getElementById('myProjectsLink');
   const portfolioLink = document.getElementById('portfolioLink');
   const adminLink = document.getElementById('adminLink');
@@ -27,10 +28,16 @@ function initAuthUI() {
 
       db.collection('users').doc(user.uid).get().then(doc => {
         const role = doc.exists ? doc.data().role : null;
-        if (role === 'investor') {
+        if (role === 'admin') {
+          if (createProjectLink) createProjectLink.style.display = 'none';
+          if (myProjectsLink) myProjectsLink.style.display = 'none';
+          if (portfolioLink) portfolioLink.style.display = 'none';
+        } else if (role === 'investor') {
+          if (createProjectLink) createProjectLink.style.display = 'none';
           if (myProjectsLink) myProjectsLink.style.display = 'none';
           if (portfolioLink) portfolioLink.style.display = 'block';
         } else {
+          if (createProjectLink) createProjectLink.style.display = 'block';
           if (myProjectsLink) myProjectsLink.style.display = 'block';
           if (portfolioLink) portfolioLink.style.display = 'none';
         }
@@ -133,10 +140,14 @@ function renderPerkUI(p) {
   }
 
   perkSection.hidden = false;
-  wantsPerk = true;
-  selectedPerkTier = null;
-  const claimInput = document.querySelector('input[name="perkChoice"][value="claim"]');
-  if (claimInput) claimInput.checked = true;
+  const checked = document.querySelector('input[name="perkChoice"]:checked');
+  if (checked) {
+    wantsPerk = checked.value === 'claim';
+  } else {
+    const claimInput = document.querySelector('input[name="perkChoice"][value="claim"]');
+    if (claimInput) claimInput.checked = true;
+    wantsPerk = true;
+  }
   updatePerkPreview();
 }
 
@@ -176,9 +187,11 @@ function updatePerkPreview() {
 }
 
 function initMethodToggle() {
-  document.querySelectorAll('.method-card').forEach(card => {
+  ['methodBank', 'methodSkill'].forEach(id => {
+    const card = document.getElementById(id);
+    if (!card) return;
     card.addEventListener('click', () => {
-      document.querySelectorAll('.method-card').forEach(c => c.style.opacity = '0.5');
+      document.querySelectorAll('#methodBank, #methodSkill').forEach(c => c.style.opacity = '0.5');
       card.style.opacity = '1';
       const isSkill = card.querySelector('input').value === 'skill';
       applyMethod(isSkill);

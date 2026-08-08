@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function initAuthUI() {
   const userMenu = document.getElementById('userMenu');
   const userDropdown = document.getElementById('userDropdown');
+  const createProjectLink = document.getElementById('createProjectLink');
   const myProjectsLink = document.getElementById('myProjectsLink');
   const portfolioLink = document.getElementById('portfolioLink');
   const adminLink = document.getElementById('adminLink');
@@ -67,10 +68,16 @@ function initAuthUI() {
 
       db.collection('users').doc(user.uid).get().then(doc => {
         const role = doc.exists ? doc.data().role : null;
-        if (role === 'investor') {
+        if (role === 'admin') {
+          if (createProjectLink) createProjectLink.style.display = 'none';
+          if (myProjectsLink) myProjectsLink.style.display = 'none';
+          if (portfolioLink) portfolioLink.style.display = 'none';
+        } else if (role === 'investor') {
+          if (createProjectLink) createProjectLink.style.display = 'none';
           if (myProjectsLink) myProjectsLink.style.display = 'none';
           if (portfolioLink) portfolioLink.style.display = 'block';
         } else {
+          if (createProjectLink) createProjectLink.style.display = 'block';
           if (myProjectsLink) myProjectsLink.style.display = 'block';
           if (portfolioLink) portfolioLink.style.display = 'none';
         }
@@ -268,12 +275,10 @@ async function openBackersModal(projectId, projectName) {
       .where('projectId', '==', projectId)
       .where('status', '==', 'confirmed')
       .get();
-    const backers = snap.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(p => p.perkTier);
+    const backers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     if (!backers.length) {
-      body.innerHTML = '<p class="text-muted text-center mb-0">Chưa có nhà đầu tư nào nhận đặc quyền.</p>';
+      body.innerHTML = '<p class="text-muted text-center mb-0">Chưa có nhà đầu tư nào ủng hộ dự án này.</p>';
       return;
     }
 
@@ -283,7 +288,7 @@ async function openBackersModal(projectId, projectName) {
           <div class="fw-semibold small">${b.userName || 'Ẩn danh'}</div>
           ${b.amount ? `<div class="small text-muted">${formatCurrency(b.amount)}</div>` : ''}
         </div>
-        <span class="badge bg-info text-dark">${b.perkTier.title}</span>
+        ${b.perkTier ? `<span class="badge bg-info text-dark">${b.perkTier.title}</span>` : ''}
       </div>
     `).join('');
   } catch (err) {

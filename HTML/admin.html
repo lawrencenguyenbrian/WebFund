@@ -63,240 +63,271 @@
           <!-- Admin content -->
           <div id="adminContent" hidden>
 
-            <div class="admin-hero d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
-              <div>
-                <div class="terminal-dock mb-2">
-                  <span class="terminal-dot red"></span>
-                  <span class="terminal-dot yellow"></span>
-                  <span class="terminal-dot green"></span>
-                  <span class="ms-1">webfund -- admin</span>
+            <div class="admin-tabs mb-4" id="adminTabs">
+              <button type="button" class="admin-tab is-active" data-section="sec-pledges"><i class="bi bi-credit-card me-1"></i>Pledges</button>
+              <button type="button" class="admin-tab" data-section="sec-projects"><i class="bi bi-hourglass-split me-1"></i>Dự án chờ duyệt</button>
+              <button type="button" class="admin-tab" data-section="sec-verification"><i class="bi bi-patch-check me-1"></i>Xác minh</button>
+              <button type="button" class="admin-tab" data-section="sec-deletes"><i class="bi bi-trash me-1"></i>Yêu cầu xóa</button>
+              <button type="button" class="admin-tab" data-section="sec-payouts"><i class="bi bi-cash-coin me-1"></i>Rút vốn</button>
+              <button type="button" class="admin-tab" data-section="sec-featured"><i class="bi bi-star me-1"></i>Nổi bật</button>
+              <button type="button" class="admin-tab" data-section="sec-deleted"><i class="bi bi-archive me-1"></i>Đã xóa</button>
+            </div>
+
+            <!-- ── Section: Pledges ── -->
+            <section class="admin-section" id="sec-pledges">
+              <div class="admin-section-head d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                <div>
+                  <div class="terminal-dock mb-2">
+                    <span class="terminal-dot red"></span>
+                    <span class="terminal-dot yellow"></span>
+                    <span class="terminal-dot green"></span>
+                    <span class="ms-1">webfund -- admin</span>
+                  </div>
+                  <h2 class="fw-bold mb-1">Quản lý pledges</h2>
+                  <p class="text-muted small mb-0">Xác nhận hoặc từ chối các cam kết góp vốn.</p>
                 </div>
-                <h2 class="fw-bold mb-1">Quản lý pledges</h2>
-                <p class="text-muted small mb-0">Xác nhận hoặc từ chối các cam kết góp vốn.</p>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-secondary is-active" id="filterAll">Tất cả</button>
+                  <button class="btn btn-sm btn-outline-secondary" id="filterPending">Chờ xác nhận</button>
+                  <button class="btn btn-sm btn-outline-secondary" id="filterConfirmed">Đã xác nhận</button>
+                </div>
               </div>
-              <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-secondary is-active" id="filterAll">Tất cả</button>
-                <button class="btn btn-sm btn-outline-secondary" id="filterPending">Chờ xác nhận</button>
-                <button class="btn btn-sm btn-outline-secondary" id="filterConfirmed">Đã xác nhận</button>
+
+              <!-- Empty -->
+              <div id="emptyPledges" class="text-center py-5" hidden>
+                <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-inbox"></i></div>
+                <h4>Không có pledge nào</h4>
+                <p class="text-muted">Chưa có cam kết góp vốn nào được tạo.</p>
               </div>
-            </div>
 
-            <!-- Empty -->
-            <div id="emptyPledges" class="text-center py-5" hidden>
-              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-inbox"></i></div>
-              <h4>Không có pledge nào</h4>
-              <p class="text-muted">Chưa có cam kết góp vốn nào được tạo.</p>
-            </div>
-
-            <!-- Pledge table -->
-            <div id="pledgeTable" class="admin-table-card" hidden>
-              <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                  <thead>
-                    <tr>
-                      <th>Người cam kết</th>
-                      <th>Dự án</th>
-                      <th>Số tiền</th>
-                      <th>Phương thức</th>
-                      <th>Trạng thái</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody id="pledgeTableBody"></tbody>
-                </table>
+              <!-- Pledge table -->
+              <div id="pledgeTable" class="admin-table-card" hidden>
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th>Người cam kết</th>
+                        <th>Dự án</th>
+                        <th>Số tiền</th>
+                        <th>Phương thức</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pledgeTableBody"></tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-5 mb-3">
-              <div>
-                <h2 class="fw-bold mb-1">Dự án chờ duyệt</h2>
-                <p class="text-muted small mb-0">Duyệt hoặc từ chối các dự án mới đăng.</p>
+            <!-- ── Section: Dự án chờ duyệt ── -->
+            <section class="admin-section" id="sec-projects" hidden>
+              <div class="admin-section-head d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                <div>
+                  <h2 class="fw-bold mb-1">Dự án chờ duyệt</h2>
+                  <p class="text-muted small mb-0">Duyệt hoặc từ chối các dự án mới đăng.</p>
+                </div>
               </div>
-            </div>
 
-            <!-- Empty -->
-            <div id="emptyProjects" class="text-center py-5" hidden>
-              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-inbox"></i></div>
-              <h4>Không có dự án chờ duyệt</h4>
-              <p class="text-muted">Chưa có dự án nào cần xử lý.</p>
-            </div>
-
-            <!-- Pending projects table -->
-            <div id="projectTable" class="admin-table-card" hidden>
-              <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                  <thead>
-                    <tr>
-                      <th>Dự án</th>
-                      <th>Người sáng lập</th>
-                      <th>Mục tiêu</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody id="projectTableBody"></tbody>
-                </table>
+              <!-- Empty -->
+              <div id="emptyProjects" class="text-center py-5" hidden>
+                <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-inbox"></i></div>
+                <h4>Không có dự án chờ duyệt</h4>
+                <p class="text-muted">Chưa có dự án nào cần xử lý.</p>
               </div>
-            </div>
 
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-5 mb-3">
-              <div>
-                <h2 class="fw-bold mb-1">Yêu cầu xác minh</h2>
-                <p class="text-muted small mb-0">Xét duyệt ảnh xác minh danh tính. Ảnh sẽ bị xóa ngay sau khi xử lý.</p>
+              <!-- Pending projects table -->
+              <div id="projectTable" class="admin-table-card" hidden>
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th>Dự án</th>
+                        <th>Người sáng lập</th>
+                        <th>Mục tiêu</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody id="projectTableBody"></tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            </section>
 
-            <!-- Empty -->
-            <div id="emptyVerification" class="text-center py-5" hidden>
-              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-patch-check"></i></div>
-              <h4>Không có yêu cầu xác minh</h4>
-              <p class="text-muted">Chưa có yêu cầu nào cần xử lý.</p>
-            </div>
-
-            <!-- Verification request table -->
-            <div id="verificationTable" class="admin-table-card" hidden>
-              <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                  <thead>
-                    <tr>
-                      <th>Người dùng</th>
-                      <th>Ảnh xác minh</th>
-                      <th>Gửi lúc</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody id="verificationTableBody"></tbody>
-                </table>
+            <!-- ── Section: Yêu cầu xác minh ── -->
+            <section class="admin-section" id="sec-verification" hidden>
+              <div class="admin-section-head d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                <div>
+                  <h2 class="fw-bold mb-1">Yêu cầu xác minh</h2>
+                  <p class="text-muted small mb-0">Xét duyệt ảnh xác minh danh tính. Ảnh sẽ bị xóa ngay sau khi xử lý.</p>
+                </div>
               </div>
-            </div>
 
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-5 mb-3">
-              <div>
-                <h2 class="fw-bold mb-1">Yêu cầu xóa dự án</h2>
-                <p class="text-muted small mb-0">Duyệt hoặc từ chối yêu cầu xóa dự án từ người sáng lập.</p>
+              <!-- Empty -->
+              <div id="emptyVerification" class="text-center py-5" hidden>
+                <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-patch-check"></i></div>
+                <h4>Không có yêu cầu xác minh</h4>
+                <p class="text-muted">Chưa có yêu cầu nào cần xử lý.</p>
               </div>
-            </div>
 
-            <!-- Empty -->
-            <div id="emptyDeleteRequests" class="text-center py-5" hidden>
-              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-inbox"></i></div>
-              <h4>Không có yêu cầu xóa</h4>
-              <p class="text-muted">Chưa có yêu cầu nào cần xử lý.</p>
-            </div>
-
-            <!-- Delete request table -->
-            <div id="deleteRequestTable" class="admin-table-card" hidden>
-              <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                  <thead>
-                    <tr>
-                      <th>Dự án</th>
-                      <th>Người sáng lập</th>
-                      <th>Mục tiêu</th>
-                      <th>Yêu cầu lúc</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody id="deleteRequestTableBody"></tbody>
-                </table>
+              <!-- Verification request table -->
+              <div id="verificationTable" class="admin-table-card" hidden>
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th>Người dùng</th>
+                        <th>Ảnh xác minh</th>
+                        <th>Gửi lúc</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody id="verificationTableBody"></tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-5 mb-3">
-              <div>
-                <h2 class="fw-bold mb-1">Yêu cầu rút vốn</h2>
-                <p class="text-muted small mb-0">Xác nhận đã nhận phí nền tảng để dự án được rút vốn.</p>
+            <!-- ── Section: Yêu cầu xóa dự án ── -->
+            <section class="admin-section" id="sec-deletes" hidden>
+              <div class="admin-section-head d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                <div>
+                  <h2 class="fw-bold mb-1">Yêu cầu xóa dự án</h2>
+                  <p class="text-muted small mb-0">Duyệt hoặc từ chối yêu cầu xóa dự án từ người sáng lập.</p>
+                </div>
               </div>
-            </div>
 
-            <!-- Empty -->
-            <div id="emptyPayoutRequests" class="text-center py-5" hidden>
-              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-cash-coin"></i></div>
-              <h4>Không có yêu cầu rút vốn</h4>
-              <p class="text-muted">Chưa có dự án nào yêu cầu rút vốn.</p>
-            </div>
-
-            <!-- Payout request table -->
-            <div id="payoutTable" class="admin-table-card" hidden>
-              <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                  <thead>
-                    <tr>
-                      <th>Dự án</th>
-                      <th>Người sáng lập</th>
-                      <th>Đã gọi vốn</th>
-                      <th>Phí nền tảng</th>
-                      <th>Yêu cầu lúc</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody id="payoutTableBody"></tbody>
-                </table>
+              <!-- Empty -->
+              <div id="emptyDeleteRequests" class="text-center py-5" hidden>
+                <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-inbox"></i></div>
+                <h4>Không có yêu cầu xóa</h4>
+                <p class="text-muted">Chưa có yêu cầu nào cần xử lý.</p>
               </div>
-            </div>
 
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-5 mb-3">
-              <div>
-                <h2 class="fw-bold mb-1">Yêu cầu nổi bật</h2>
-                <p class="text-muted small mb-0">Duyệt hoặc từ chối yêu cầu làm nổi bật dự án.</p>
+              <!-- Delete request table -->
+              <div id="deleteRequestTable" class="admin-table-card" hidden>
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th>Dự án</th>
+                        <th>Người sáng lập</th>
+                        <th>Mục tiêu</th>
+                        <th>Yêu cầu lúc</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody id="deleteRequestTableBody"></tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            </section>
 
-            <!-- Empty -->
-            <div id="emptyFeaturedRequests" class="text-center py-5" hidden>
-              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-star"></i></div>
-              <h4>Không có yêu cầu nổi bật</h4>
-              <p class="text-muted">Chưa có dự án nào yêu cầu nổi bật.</p>
-            </div>
-
-            <!-- Featured request table -->
-            <div id="featuredRequestTable" class="admin-table-card" hidden>
-              <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                  <thead>
-                    <tr>
-                      <th>Dự án</th>
-                      <th>Người sáng lập</th>
-                      <th>Yêu cầu lúc</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody id="featuredRequestTableBody"></tbody>
-                </table>
+            <!-- ── Section: Yêu cầu rút vốn ── -->
+            <section class="admin-section" id="sec-payouts" hidden>
+              <div class="admin-section-head d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                <div>
+                  <h2 class="fw-bold mb-1">Yêu cầu rút vốn</h2>
+                  <p class="text-muted small mb-0">Xác nhận đã nhận phí nền tảng để dự án được rút vốn.</p>
+                </div>
               </div>
-            </div>
 
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-5 mb-3">
-              <div>
-                <h2 class="fw-bold mb-1">Dự án đã xóa</h2>
-                <p class="text-muted small mb-0">Nhật ký các dự án đã bị xóa. Có thể khôi phục nếu cần.</p>
+              <!-- Empty -->
+              <div id="emptyPayoutRequests" class="text-center py-5" hidden>
+                <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-cash-coin"></i></div>
+                <h4>Không có yêu cầu rút vốn</h4>
+                <p class="text-muted">Chưa có dự án nào yêu cầu rút vốn.</p>
               </div>
-            </div>
 
-            <!-- Empty -->
-            <div id="emptyDeleted" class="text-center py-5" hidden>
-              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-archive"></i></div>
-              <h4>Chưa có dự án nào bị xóa</h4>
-              <p class="text-muted">Nhật ký dự án đã xóa sẽ hiển thị ở đây.</p>
-            </div>
-
-            <!-- Deleted projects table -->
-            <div id="deletedTable" class="admin-table-card" hidden>
-              <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                  <thead>
-                    <tr>
-                      <th>Dự án</th>
-                      <th>Người sáng lập</th>
-                      <th>Mục tiêu</th>
-                      <th>Bị xóa lúc</th>
-                      <th>Người xóa</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody id="deletedTableBody"></tbody>
-                </table>
+              <!-- Payout request table -->
+              <div id="payoutTable" class="admin-table-card" hidden>
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th>Dự án</th>
+                        <th>Người sáng lập</th>
+                        <th>Đã gọi vốn</th>
+                        <th>Phí nền tảng</th>
+                        <th>Yêu cầu lúc</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody id="payoutTableBody"></tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            </section>
+
+            <!-- ── Section: Yêu cầu nổi bật ── -->
+            <section class="admin-section" id="sec-featured" hidden>
+              <div class="admin-section-head d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                <div>
+                  <h2 class="fw-bold mb-1">Yêu cầu nổi bật</h2>
+                  <p class="text-muted small mb-0">Duyệt hoặc từ chối yêu cầu làm nổi bật dự án.</p>
+                </div>
+              </div>
+
+              <!-- Empty -->
+              <div id="emptyFeaturedRequests" class="text-center py-5" hidden>
+                <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-star"></i></div>
+                <h4>Không có yêu cầu nổi bật</h4>
+                <p class="text-muted">Chưa có dự án nào yêu cầu nổi bật.</p>
+              </div>
+
+              <!-- Featured request table -->
+              <div id="featuredRequestTable" class="admin-table-card" hidden>
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th>Dự án</th>
+                        <th>Người sáng lập</th>
+                        <th>Yêu cầu lúc</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody id="featuredRequestTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            <!-- ── Section: Dự án đã xóa ── -->
+            <section class="admin-section" id="sec-deleted" hidden>
+              <div class="admin-section-head d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                <div>
+                  <h2 class="fw-bold mb-1">Dự án đã xóa</h2>
+                  <p class="text-muted small mb-0">Nhật ký các dự án đã bị xóa. Có thể khôi phục nếu cần.</p>
+                </div>
+              </div>
+
+              <!-- Empty -->
+              <div id="emptyDeleted" class="text-center py-5" hidden>
+                <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-archive"></i></div>
+                <h4>Chưa có dự án nào bị xóa</h4>
+                <p class="text-muted">Nhật ký dự án đã xóa sẽ hiển thị ở đây.</p>
+              </div>
+
+              <!-- Deleted projects table -->
+              <div id="deletedTable" class="admin-table-card" hidden>
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th>Dự án</th>
+                        <th>Người sáng lập</th>
+                        <th>Mục tiêu</th>
+                        <th>Bị xóa lúc</th>
+                        <th>Người xóa</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody id="deletedTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
 
           </div>
 
