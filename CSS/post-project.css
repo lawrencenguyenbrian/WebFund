@@ -88,6 +88,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   background-color: #1e2440;
   border-color: #2a3155;
 }
+.dropdown-menu .dropdown-item i.bi { min-width: 1.2em; text-align: center; }
 [data-bs-theme="dark"] .dropdown-item {
   color: #c8cde0;
 }

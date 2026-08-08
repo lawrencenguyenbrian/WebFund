@@ -30,8 +30,10 @@ service cloud.firestore {
     // ── users ──
     // Any signed-in user may read any user doc (for founder/investor names).
     // A user creates/updates their own doc and may pick founder/investor, but
-    // can never promote themselves to admin (or demote an existing admin).
-    // Only an existing admin may grant the 'admin' role to someone.
+    // can never promote themselves to admin (or demote an existing admin), and
+    // can never set verified — that flag is admin-only (set when an admin
+    // approves a verification request). Only an existing admin may grant the
+    // 'admin' role or set verified.
     // Account deletion is self-service only (settings.js).
     match /users/{uid} {
       allow read: if signedIn();
@@ -41,6 +43,7 @@ service cloud.firestore {
         isAdmin()
         || (
           request.auth.uid == uid
+          && fieldOrNull(request.resource.data, 'verified') == fieldOrNull(resource.data, 'verified')
           && (
             request.resource.data.role == resource.data.role
             || (
@@ -51,6 +54,28 @@ service cloud.firestore {
         )
       );
       allow delete: if request.auth.uid == uid;
+    }
+
+    // ── verificationRequests ──
+    // One transient doc per user (doc id = the user's uid). Users may read
+    // their own request and may create one (or re-apply from a 'rejected'
+    // state) but always with status == 'pending' — they can never set status
+    // to 'approved'/'rejected' themselves, nor touch their own users doc
+    // verified flag (locked down in the users rule above). Only an admin may
+    // list all requests, approve/reject (change status), and strip idPhotoUrl
+    // (FieldValue.delete()) so the photo reference does not outlive the review.
+    match /verificationRequests/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.status == 'pending';
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && request.auth.uid == uid
+          && resource.data.status == 'rejected'
+          && request.resource.data.status == 'pending'
+        );
     }
 
     // ── projects ──
