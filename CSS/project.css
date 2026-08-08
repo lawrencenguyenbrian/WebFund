@@ -39,6 +39,8 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   border-radius: 16px;
   overflow: hidden;
   max-height: 420px;
+  position: relative;
+  cursor: zoom-in;
 }
 .project-cover {
   width: 100%;
@@ -46,7 +48,23 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   max-height: 420px;
   object-fit: cover;
   display: block;
+  transition: opacity .2s;
 }
+.project-cover-wrapper:hover .project-cover { opacity: .92; }
+.project-cover-zoom {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .35);
+  color: #fff;
+  font-size: 1.6rem;
+  opacity: 0;
+  transition: opacity .2s;
+  pointer-events: none;
+}
+.project-cover-wrapper:hover .project-cover-zoom { opacity: 1; }
 
 /* ── Main Card ── */
 .project-main-card {
@@ -109,6 +127,59 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 }
 .gallery-img:hover { transform: scale(1.02); }
 [data-bs-theme="light"] .gallery-img { border-color: #dce1ea; }
+
+/* ── Lightbox ── */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, .92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.lightbox[hidden] { display: none; }
+.lightbox-img {
+  max-width: 92vw;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .6);
+}
+.lightbox-close,
+.lightbox-nav {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.lightbox-close:hover,
+.lightbox-nav:hover { background: rgba(255, 255, 255, .25); }
+.lightbox-close { position: absolute; top: 1.25rem; right: 1.25rem; }
+.lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); }
+.lightbox-prev { left: 1.25rem; }
+.lightbox-next { right: 1.25rem; }
+.lightbox-counter {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  background: rgba(255, 255, 255, .14);
+  padding: .3rem .85rem;
+  border-radius: 20px;
+  font-size: .85rem;
+  font-weight: 500;
+}
 
 /* ── Timeline ── */
 .project-timeline {

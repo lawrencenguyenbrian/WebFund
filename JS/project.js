@@ -3,10 +3,13 @@ let currentProject = null;
 let currentUser = null;
 let currentUserRole = null;
 let countdownTimer = null;
+let lightboxImages = [];
+let lightboxIndex = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
   initAuthUI();
+  initLightbox();
 
   const deleteBtn = document.getElementById('deleteProjectBtn');
   if (deleteBtn) {
@@ -22,6 +25,7 @@ function initAuthUI() {
   const userMenu = document.getElementById('userMenu');
   const userDropdown = document.getElementById('userDropdown');
   const createBtn = document.getElementById('createProjectBtn');
+  const createProjectLink = document.getElementById('createProjectLink');
   const myProjectsLink = document.getElementById('myProjectsLink');
   const portfolioLink = document.getElementById('portfolioLink');
   const adminLink = document.getElementById('adminLink');
@@ -39,11 +43,18 @@ function initAuthUI() {
 
       db.collection('users').doc(user.uid).get().then(doc => {
         currentUserRole = doc.exists ? doc.data().role : null;
-        if (currentUserRole === 'investor') {
+        if (currentUserRole === 'admin') {
+          createBtn.style.display = 'inline-block';
+          if (createProjectLink) createProjectLink.style.display = 'none';
+          if (myProjectsLink) myProjectsLink.style.display = 'none';
+          if (portfolioLink) portfolioLink.style.display = 'none';
+        } else if (currentUserRole === 'investor') {
           createBtn.style.display = 'none';
+          if (createProjectLink) createProjectLink.style.display = 'none';
           if (myProjectsLink) myProjectsLink.style.display = 'none';
           if (portfolioLink) portfolioLink.style.display = 'block';
         } else {
+          if (createProjectLink) createProjectLink.style.display = 'block';
           if (myProjectsLink) myProjectsLink.style.display = 'block';
           if (portfolioLink) portfolioLink.style.display = 'none';
         }
@@ -92,6 +103,56 @@ function showNotFound() {
   document.getElementById('notFoundState').hidden = false;
 }
 
+/* ── Lightbox ── */
+function initLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  if (!lightbox) return;
+  const img = document.getElementById('lightboxImg');
+  const counter = document.getElementById('lightboxCounter');
+  const prevBtn = document.getElementById('lightboxPrev');
+  const nextBtn = document.getElementById('lightboxNext');
+
+  function urls() { return lightboxImages.filter(Boolean); }
+
+  function close() {
+    lightbox.hidden = true;
+    document.removeEventListener('keydown', onKey);
+  }
+
+  function show() {
+    const list = urls();
+    img.src = list[lightboxIndex] || '';
+    counter.textContent = list.length > 1 ? `${lightboxIndex + 1} / ${list.length}` : '';
+    prevBtn.hidden = list.length < 2;
+    nextBtn.hidden = list.length < 2;
+    lightbox.hidden = false;
+    document.addEventListener('keydown', onKey);
+  }
+
+  function go(dir) {
+    const list = urls();
+    if (list.length < 2) return;
+    lightboxIndex = (lightboxIndex + dir + list.length) % list.length;
+    show();
+  }
+
+  function onKey(e) {
+    if (e.key === 'ArrowLeft') go(-1);
+    else if (e.key === 'ArrowRight') go(1);
+    else if (e.key === 'Escape') close();
+  }
+
+  document.getElementById('lightboxClose').addEventListener('click', close);
+  prevBtn.addEventListener('click', () => go(-1));
+  nextBtn.addEventListener('click', () => go(1));
+  lightbox.addEventListener('click', (e) => { if (e.target === lightbox) close(); });
+
+  window.openLightbox = function(index) {
+    lightboxIndex = index || 0;
+    show();
+  };
+}
+
 function renderProject(p) {
   const isOwner = currentUser && p.userId === currentUser.uid;
   const isAdmin = currentUserRole === 'admin';
@@ -105,10 +166,16 @@ function renderProject(p) {
 
   document.title = `${p.name} — WebFund`;
 
-  document.getElementById('projectCover').src = p.coverImage || '';
-  document.getElementById('projectCover').alt = p.name;
+  const coverEl = document.getElementById('projectCover');
+  coverEl.src = p.coverImage || '';
+  coverEl.alt = p.name;
   document.getElementById('projectName').textContent = p.name;
   document.getElementById('projectTagline').textContent = p.tagline || '';
+
+  // Lightbox source: cover first, then gallery images
+  const galleryUrls = p.gallery || [];
+  lightboxImages = [p.coverImage || '', ...galleryUrls];
+  coverEl.onclick = p.coverImage ? () => openLightbox(0) : null;
 
   const stageMap = { idea: 'Idea', mvp: 'MVP', growth: 'Growth', scale: 'Scale' };
   const stageClass = { idea: 'bg-warning text-dark', mvp: 'bg-primary text-white', growth: 'bg-info text-dark', scale: 'bg-success text-white' };
@@ -129,11 +196,15 @@ function renderProject(p) {
   document.getElementById('projectDesc').innerHTML = (p.desc || '').replace(/\n/g, '<br>');
 
   // Gallery
-  if (p.gallery && p.gallery.length) {
+  if (galleryUrls.length) {
     document.getElementById('gallerySection').hidden = false;
-    document.getElementById('projectGallery').innerHTML = p.gallery.map(url =>
-      `<img src="${url}" alt="Gallery" class="gallery-img">`
+    const galleryEl = document.getElementById('projectGallery');
+    galleryEl.innerHTML = galleryUrls.map((url, i) =>
+      `<img src="${url}" alt="Gallery" class="gallery-img" data-index="${i}">`
     ).join('');
+    galleryEl.querySelectorAll('.gallery-img').forEach(imgEl => {
+      imgEl.addEventListener('click', () => openLightbox(parseInt(imgEl.dataset.index, 10) + 1));
+    });
   }
 
   // Milestones
@@ -199,7 +270,7 @@ function renderProject(p) {
   document.getElementById('projectProgressBar').style.width = pct + '%';
   document.getElementById('projectPct').textContent = pct + '%';
   const daysLeft = getDaysLeft(p);
-  document.getElementById('projectDaysLeft').textContent = daysLeft === 0 ? 'Đã đủ vốn' : `Còn ${daysLeft} ngày`;
+  document.getElementById('projectDaysLeft').textContent = p.raised >= p.goal ? 'Đã đủ vốn' : `Còn ${daysLeft} ngày`;
   document.getElementById('payoutPaidNote').hidden = !(p.payoutStatus === 'paid');
 
   // Creator
@@ -273,7 +344,7 @@ function renderProject(p) {
   if (p.deadline) {
     countdownTimer = setInterval(() => {
       const left = getDaysLeft(p);
-      document.getElementById('projectDaysLeft').textContent = left === 0 ? 'Đã đủ vốn' : `Còn ${left} ngày`;
+      document.getElementById('projectDaysLeft').textContent = p.raised >= p.goal ? 'Đã đủ vốn' : `Còn ${left} ngày`;
     }, 60 * 1000);
   }
 

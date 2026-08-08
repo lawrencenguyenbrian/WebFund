@@ -58,10 +58,66 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 .terminal-dot.green { background: #27c93f; }
 
 /* ── Filter buttons ── */
-.admin-hero .btn-outline-secondary.is-active {
+.admin-section-head .btn-outline-secondary.is-active {
   background: var(--bs-primary) !important;
   color: #fff !important;
   border-color: var(--bs-primary) !important;
+}
+
+/* ── Admin Tabs ── */
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.admin-tab {
+  border: 1px solid #2a3155;
+  background: #1e2440;
+  color: #8892b0;
+  border-radius: 10px;
+  padding: .55rem 1rem;
+  font-size: .85rem;
+  font-weight: 500;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.admin-tab:hover {
+  color: #fff;
+  border-color: #4a5580;
+}
+.admin-tab.is-active {
+  background: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
+[data-bs-theme="light"] .admin-tab {
+  background: #fff;
+  border-color: #dce1ea;
+  color: #5a6178;
+}
+[data-bs-theme="light"] .admin-tab:hover {
+  color: #000;
+  border-color: #c0c8da;
+}
+[data-bs-theme="light"] .admin-tab.is-active {
+  color: #fff;
+}
+
+/* ── Admin Sections (each looks like its own page) ── */
+.admin-section {
+  display: block;
+}
+.admin-section[hidden] {
+  display: none !important;
+}
+.admin-section-head {
+  padding: 1.25rem 1.5rem;
+  background: #1e2440;
+  border: 1px solid #2a3155;
+  border-radius: 14px;
+}
+[data-bs-theme="light"] .admin-section-head {
+  background: #fff;
+  border-color: #dce1ea;
 }
 
 /* ── Table Card ── */
