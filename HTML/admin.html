@@ -27,14 +27,14 @@
           <div id="userMenu" class="dropdown" style="display:none">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" id="userDropdown"></button>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="main.html">Trang chủ</a></li>
-              <li><a class="dropdown-item" href="post-project.html" id="createProjectLink">+ Dự án mới</a></li>
-              <li><a class="dropdown-item" href="my-projects.html" id="myProjectsLink" style="display:none">Dự án của tôi</a></li>
-              <li><a class="dropdown-item" href="portfolio.html" id="portfolioLink" style="display:none">Portfolio</a></li>
-              <li><a class="dropdown-item" href="admin.html" id="adminLink" style="display:none"><i class="bi bi-shield-lock"></i> Admin</a></li>
-              <li><a class="dropdown-item" href="settings.html"><i class="bi bi-gear"></i> Cài đặt</a></li>
+              <li><a class="dropdown-item" href="main.html"><i class="bi bi-house-door me-2"></i>Trang chủ</a></li>
+              <li><a class="dropdown-item" href="post-project.html" id="createProjectLink"><i class="bi bi-plus-square me-2"></i>Dự án mới</a></li>
+              <li><a class="dropdown-item" href="my-projects.html" id="myProjectsLink" style="display:none"><i class="bi bi-folder2-open me-2"></i>Dự án của tôi</a></li>
+              <li><a class="dropdown-item" href="portfolio.html" id="portfolioLink" style="display:none"><i class="bi bi-bookmark-heart me-2"></i>Portfolio</a></li>
+              <li><a class="dropdown-item" href="admin.html" id="adminLink" style="display:none"><i class="bi bi-shield-lock me-2"></i>Admin</a></li>
+              <li><a class="dropdown-item" href="settings.html"><i class="bi bi-gear me-2"></i>Cài đặt</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><button class="dropdown-item" id="logoutBtn">Đăng xuất</button></li>
+              <li><button class="dropdown-item" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button></li>
           </div>
         </div>
       </div>
@@ -134,6 +134,37 @@
                     </tr>
                   </thead>
                   <tbody id="projectTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-5 mb-3">
+              <div>
+                <h2 class="fw-bold mb-1">Yêu cầu xác minh</h2>
+                <p class="text-muted small mb-0">Xét duyệt ảnh xác minh danh tính. Ảnh sẽ bị xóa ngay sau khi xử lý.</p>
+              </div>
+            </div>
+
+            <!-- Empty -->
+            <div id="emptyVerification" class="text-center py-5" hidden>
+              <div style="font-size:3rem;margin-bottom:1rem"><i class="bi bi-patch-check"></i></div>
+              <h4>Không có yêu cầu xác minh</h4>
+              <p class="text-muted">Chưa có yêu cầu nào cần xử lý.</p>
+            </div>
+
+            <!-- Verification request table -->
+            <div id="verificationTable" class="admin-table-card" hidden>
+              <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                  <thead>
+                    <tr>
+                      <th>Người dùng</th>
+                      <th>Ảnh xác minh</th>
+                      <th>Gửi lúc</th>
+                      <th>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="verificationTableBody"></tbody>
                 </table>
               </div>
             </div>
@@ -275,6 +306,18 @@
   </main>
 
   <div class="error-toast" id="errorToast"></div>
+
+  <!-- Photo lightbox modal -->
+  <div class="modal fade" id="verificationPhotoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content bg-transparent border-0 position-relative">
+        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        <div class="modal-body p-0 text-center">
+          <img id="verificationPhotoFull" src="" alt="Ảnh xác minh" class="img-fluid rounded" style="max-height:80vh">
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>

@@ -138,10 +138,10 @@ npx firebase-tools serve --only hosting
 ## Data Model
 
 ### `users/{uid}`
-`name`, `email`, `role` (`founder` | `investor` | `admin`), `createdAt`
+`name`, `email`, `role` (`founder` | `investor` | `admin`), `createdAt`, `verified` (admin-only), public profile: `bio`, `location`, `website`, `socialLinks` (`facebook`, `linkedin`), `avatarUrl` (Cloudinary, folder `webfund/avatars`)
 
 ### `projects/{projectId}`
-`userId`, `userName`, `name`, `tagline`, `desc`, `stage`, `category`, `tags`, `goal`, `raised`, `status` (`pending` | `approved` | `rejected`), `coverImage`, `gallery`, `milestones`, `team`, `useOfFunds`, `email`, `socialLinks`, `strategies`, `daysLeft`, `createdAt`
+`userId`, `userName`, `name`, `tagline`, `desc`, `stage`, `category`, `tags`, `goal`, `raised`, `status` (`pending` | `approved` | `rejected`), `coverImage`, `gallery`, `milestones`, `team`, `useOfFunds`, `email`, `socialLinks`, `strategies` (`crowdfund` | `skill`), `perkTiers` (`{id, minAmount, title, description, durationMonths}` — `durationMonths: null` = non-expiring), `deadline` (Timestamp), `daysLeft` (static fallback for legacy projects), `createdAt`
 
 **Workflow fields (admin-controlled):**
 - `deleteRequested` / `deleteRequestedBy` — founder asks to delete; admin approves (doc moves to `deletedProjects`) or rejects (clears the fields)
@@ -154,7 +154,10 @@ npx firebase-tools serve --only hosting
 Founder progress posts: `title`, `content`, `createdAt`
 
 ### `pledges/{pledgeId}`
-`userId`, `userName`, `userEmail`, `projectId`, `projectName`, `amount`, `method` (`bank_transfer` | `skill`), `skill`, `note`, `status` (`pending` | `confirmed` | `rejected`), `createdAt`. Pledges are never deleted.
+`userId`, `userName`, `userEmail`, `projectId`, `projectName`, `amount`, `method` (`bank_transfer` | `skill`), `skill`, `wantsPerk`, `perkTier`, `note`, `status` (`pending` | `confirmed` | `rejected`), `createdAt`. Pledges are never deleted. Confirming a perk pledge sets `perkGrantedUntil` on the user.
+
+### `verificationRequests/{uid}`
+One doc per user (doc id = user's uid). `userId`, `userName`, `userEmail`, `idPhotoUrl`, `status` (`pending` | `approved` | `rejected`), `submittedAt`. `idPhotoUrl` is transient — it is uploaded to Cloudinary (folder `webfund/verification`) and stripped with `FieldValue.delete()` in the same transaction as the admin approve/reject, so no ID image persists after review. No OCR/document data is stored.
 
 ### `deletedProjects/{projectId}`
 Audit copy of a deleted project + `deletedAt`, `deletedBy`, `deletedByEmail`, and (when restored) `restoredAt`, `restoredBy`.
@@ -169,6 +172,7 @@ All authorization is enforced in `firestore.rules` — client-side UI checks are
 - **Users** create/update their own doc with `role` limited to `founder`/`investor`; only an existing `admin` (checked via a `get()` on `users/{uid}`) can grant `admin`.
 - **Projects** are publicly readable when `status == "approved"`; owners/admins read everything. Creation requires `status == "pending"`, `raised == 0`, owned by the caller. Owners may edit content and signal delete/payout/feature requests, but **cannot** change `status`, `raised`, `userId`, `payoutStatus`, `feeAmount`, `featured`, or `featuredUntil`. Deletes are admin-only (with audit copy).
 - **Pledges** are readable by their owner or admins; creation is self-only and always `pending`; only admins confirm/reject (amount/project/user immutable); deletion is forbidden.
+- **`verificationRequests`** are readable by their owner or admins; users create only their own doc with `status == "pending"` and may re-apply only from `rejected` → `pending`; only admins flip status to `approved`/`rejected`. `users.verified` is admin-only (owner updates must leave `verified` unchanged).
 - **`deletedProjects`** is an admin-only audit log.
 
 ---

@@ -1,6 +1,8 @@
 const db = firebase.firestore();
 let allPledges = [];
 let allPendingProjects = [];
+let allVerificationRequests = [];
+let verifiedUserIds = new Set();
 let currentFilter = 'all';
 
 const PLATFORM_FEE_PCT = 0.05;
@@ -55,6 +57,7 @@ function checkAdmin(uid) {
         document.getElementById('adminContent').hidden = false;
         loadPledges();
         loadPendingProjects();
+        loadVerificationRequests();
         loadDeleteRequests();
         loadDeletedProjects();
         loadPayoutRequests();
@@ -79,11 +82,26 @@ function loadPledges() {
       }
       allPledges = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       allPledges.sort((a, b) => (b.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+      loadVerifiedUsers();
       renderPledges();
     })
     .catch(() => {
       document.getElementById('emptyPledges').hidden = false;
     });
+}
+
+function loadVerifiedUsers() {
+  verifiedUserIds = new Set();
+  const uids = [...new Set(allPledges.map(p => p.userId).filter(Boolean))];
+  if (!uids.length) return;
+  Promise.all(uids.map(uid => db.collection('users').doc(uid).get()))
+    .then(docs => {
+      docs.forEach(doc => {
+        if (doc.exists && doc.data().verified) verifiedUserIds.add(doc.id);
+      });
+      renderPledges();
+    })
+    .catch(() => {});
 }
 
 function initFilters() {
@@ -139,7 +157,7 @@ function renderPledges() {
     return `
       <tr>
         <td>
-          <div class="fw-semibold">${p.userName || 'N/A'}</div>
+          <div class="fw-semibold">${p.userName || 'N/A'}${verifiedUserIds.has(p.userId) ? ' <i class="bi bi-patch-check-fill text-primary" title="Đã xác minh"></i>' : ''}</div>
           <div class="small text-muted">${p.userEmail || ''}</div>
         </td>
         <td>
@@ -222,6 +240,109 @@ function formatCurrency(n) {
   if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + ' tỷ ₫';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(0) + ' tr ₫';
   return (n || 0).toLocaleString('vi-VN') + ' ₫';
+}
+
+function loadVerificationRequests() {
+  db.collection('verificationRequests').where('status', '==', 'pending').get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        document.getElementById('emptyVerification').hidden = false;
+        return;
+      }
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      list.sort((a, b) => (b.submittedAt?.seconds || 0) - (a.submittedAt?.seconds || 0));
+      renderVerificationRequests(list);
+    })
+    .catch(() => {
+      document.getElementById('emptyVerification').hidden = false;
+    });
+}
+
+function renderVerificationRequests(list) {
+  allVerificationRequests = list;
+  document.getElementById('emptyVerification').hidden = true;
+  document.getElementById('verificationTable').hidden = false;
+
+  document.getElementById('verificationTableBody').innerHTML = list.map(r => {
+    const submitted = r.submittedAt?.toDate ? r.submittedAt.toDate().toLocaleString('vi-VN') : '';
+    return `
+      <tr>
+        <td>
+          <div class="fw-semibold">${r.userName || 'N/A'}</div>
+          <div class="small text-muted">${r.userEmail || ''}</div>
+        </td>
+        <td>
+          ${r.idPhotoUrl
+            ? `<img src="${r.idPhotoUrl}" alt="Ảnh xác minh" class="verification-thumb" onclick="viewVerificationPhoto('${r.userId}')">`
+            : '<span class="small text-muted">—</span>'}
+        </td>
+        <td class="small text-muted">${submitted}</td>
+        <td>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-success" onclick="approveVerification('${r.userId}', this)" title="Duyệt">
+              <i class="bi bi-check-lg"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="rejectVerification('${r.userId}', this)" title="Từ chối">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function viewVerificationPhoto(uid) {
+  const req = allVerificationRequests.find(r => r.id === uid);
+  if (!req?.idPhotoUrl) return;
+  document.getElementById('verificationPhotoFull').src = req.idPhotoUrl;
+  new bootstrap.Modal(document.getElementById('verificationPhotoModal')).show();
+}
+
+async function approveVerification(uid, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await db.runTransaction(async (tx) => {
+      const reqRef = db.collection('verificationRequests').doc(uid);
+      const reqSnap = await tx.get(reqRef);
+      if (!reqSnap.exists) throw new Error('Yêu cầu không tồn tại');
+      if (reqSnap.data().status !== 'pending') throw new Error('Yêu cầu đã được xử lý');
+
+      tx.update(db.collection('users').doc(uid), { verified: true });
+      tx.update(reqRef, {
+        status: 'approved',
+        idPhotoUrl: firebase.firestore.FieldValue.delete()
+      });
+    });
+    loadVerificationRequests();
+    loadVerifiedUsers();
+    showToast('Đã xác minh người dùng');
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+async function rejectVerification(uid, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await db.runTransaction(async (tx) => {
+      const reqRef = db.collection('verificationRequests').doc(uid);
+      const reqSnap = await tx.get(reqRef);
+      if (!reqSnap.exists) throw new Error('Yêu cầu không tồn tại');
+      if (reqSnap.data().status !== 'pending') throw new Error('Yêu cầu đã được xử lý');
+
+      tx.update(reqRef, {
+        status: 'rejected',
+        idPhotoUrl: firebase.firestore.FieldValue.delete()
+      });
+    });
+    loadVerificationRequests();
+    showToast('Đã từ chối yêu cầu xác minh');
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    showToast('Lỗi: ' + e.message);
+  }
 }
 
 function loadPendingProjects() {

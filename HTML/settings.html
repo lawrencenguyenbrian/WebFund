@@ -27,14 +27,14 @@
           <div id="userMenu" class="dropdown" style="display:none">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" id="userDropdown"></button>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="main.html">Trang chủ</a></li>
-              <li><a class="dropdown-item" href="post-project.html" id="createProjectLink">+ Dự án mới</a></li>
-              <li><a class="dropdown-item" href="my-projects.html" id="myProjectsLink" style="display:none">Dự án của tôi</a></li>
-              <li><a class="dropdown-item" href="portfolio.html" id="portfolioLink" style="display:none">Portfolio</a></li>
-              <li><a class="dropdown-item" href="admin.html" id="adminLink" style="display:none"><i class="bi bi-shield-lock"></i> Admin</a></li>
-              <li><a class="dropdown-item" href="settings.html"><i class="bi bi-gear"></i> Cài đặt</a></li>
+              <li><a class="dropdown-item" href="main.html"><i class="bi bi-house-door me-2"></i>Trang chủ</a></li>
+              <li><a class="dropdown-item" href="post-project.html" id="createProjectLink"><i class="bi bi-plus-square me-2"></i>Dự án mới</a></li>
+              <li><a class="dropdown-item" href="my-projects.html" id="myProjectsLink" style="display:none"><i class="bi bi-folder2-open me-2"></i>Dự án của tôi</a></li>
+              <li><a class="dropdown-item" href="portfolio.html" id="portfolioLink" style="display:none"><i class="bi bi-bookmark-heart me-2"></i>Portfolio</a></li>
+              <li><a class="dropdown-item" href="admin.html" id="adminLink" style="display:none"><i class="bi bi-shield-lock me-2"></i>Admin</a></li>
+              <li><a class="dropdown-item" href="settings.html"><i class="bi bi-gear me-2"></i>Cài đặt</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><button class="dropdown-item" id="logoutBtn">Đăng xuất</button></li>
+              <li><button class="dropdown-item" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button></li>
             </ul>
           </div>
         </div>
@@ -187,6 +187,143 @@
               </div>
             </div>
 
+            <!-- ── Public Profile Section ── -->
+            <div class="settings-card mb-4">
+              <div class="settings-card-header">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-person-badge fs-5 text-primary"></i>
+                  <h5 class="mb-0 fw-bold">Hồ sơ công khai</h5>
+                  <button class="btn btn-sm btn-outline-primary ms-auto" id="editProfileBtn"><i class="bi bi-pencil me-1"></i>Chỉnh sửa</button>
+                </div>
+              </div>
+              <div class="settings-card-body">
+
+                <!-- Avatar -->
+                <div class="text-center py-3">
+                  <div class="profile-avatar-wrap">
+                    <div class="profile-avatar" id="profileAvatar">U</div>
+                    <button type="button" class="profile-avatar-edit" id="changeAvatarBtn">
+                      <i class="bi bi-camera-fill me-1"></i>Đổi ảnh đại diện
+                    </button>
+                  </div>
+                  <input type="file" id="avatarInput" accept="image/*" hidden>
+                  <div class="progress mx-auto mt-2" style="height:4px;width:140px;display:none" id="avatarProgressWrap">
+                    <div class="progress-bar" id="avatarProgress" style="width:0%"></div>
+                  </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <!-- Bio -->
+                <div class="settings-row">
+                  <div class="settings-label">
+                    <span class="settings-label-text">Giới thiệu bản thân</span>
+                    <span class="text-muted small d-block" id="publicBio">—</span>
+                  </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <!-- Location -->
+                <div class="settings-row">
+                  <div class="settings-label">
+                    <span class="settings-label-text">Khu vực</span>
+                    <span class="text-muted small d-block" id="publicLocation">—</span>
+                  </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <!-- Website -->
+                <div class="settings-row">
+                  <div class="settings-label">
+                    <span class="settings-label-text">Website</span>
+                    <span class="text-muted small d-block" id="publicWebsite">—</span>
+                  </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <!-- Social links -->
+                <div class="settings-row">
+                  <div class="settings-label">
+                    <span class="settings-label-text">Mạng xã hội</span>
+                    <span class="text-muted small d-block" id="publicSocial">—</span>
+                  </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <!-- Member since -->
+                <div class="settings-row">
+                  <div class="settings-label">
+                    <span class="settings-label-text">Thành viên từ</span>
+                    <span class="text-muted small d-block">Không thể thay đổi</span>
+                  </div>
+                  <div class="settings-value">
+                    <span id="memberSinceValue" class="text-muted">—</span>
+                  </div>
+                </div>
+
+                <!-- Edit profile form (hidden by default) -->
+                <div id="editProfileForm" class="settings-edit-form" hidden>
+                  <div class="mb-2">
+                    <label class="form-label small fw-semibold">Giới thiệu bản thân</label>
+                    <textarea class="form-control form-control-sm" id="profileBioInput" rows="3" maxlength="300" placeholder="Giới thiệu ngắn về bạn..."></textarea>
+                    <small class="text-muted">Tối đa 300 ký tự</small>
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label small fw-semibold">Khu vực</label>
+                    <input type="text" class="form-control form-control-sm" id="profileLocationInput" placeholder="VD: TP. Hồ Chí Minh">
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label small fw-semibold">Website</label>
+                    <input type="url" class="form-control form-control-sm" id="profileWebsiteInput" placeholder="https://...">
+                  </div>
+                  <div class="row g-2 mb-2">
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold">Facebook</label>
+                      <input type="url" class="form-control form-control-sm" id="profileFacebookInput" placeholder="https://facebook.com/...">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold">LinkedIn</label>
+                      <input type="url" class="form-control form-control-sm" id="profileLinkedinInput" placeholder="https://linkedin.com/in/...">
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary" id="saveProfileBtn">Lưu hồ sơ</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="cancelProfileBtn">Hủy</button>
+                  </div>
+                  <p class="text-danger small mt-1 mb-0" id="profileError" hidden></p>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- ── Verification Section ── -->
+            <div class="settings-card mb-4">
+              <div class="settings-card-header">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-patch-check fs-5 text-primary"></i>
+                  <h5 class="mb-0 fw-bold">Xác minh danh tính</h5>
+                </div>
+              </div>
+              <div class="settings-card-body">
+
+                <div class="settings-row">
+                  <div class="settings-label">
+                    <span class="settings-label-text">Trạng thái xác minh</span>
+                    <span class="text-muted small d-block">Dấu tích xác minh sẽ hiển thị bên cạnh tên của bạn</span>
+                  </div>
+                  <div class="settings-value d-flex align-items-center gap-2">
+                    <span id="verificationStatusBadge" class="badge bg-secondary">Chưa xác minh</span>
+                    <button class="btn btn-sm btn-outline-primary" id="verificationBtn" hidden><i class="bi bi-shield-check me-1"></i>Gửi yêu cầu xác minh</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
             <!-- ── Theme Section ── -->
             <div class="settings-card mb-4">
               <div class="settings-card-header">
@@ -279,6 +416,45 @@
       <div class="d-flex">
         <div class="toast-body" id="toastMsg"></div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verification request modal -->
+  <div class="modal fade" id="verificationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Gửi yêu cầu xác minh</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info small mb-3">
+            <i class="bi bi-shield-check me-1"></i>
+            Ảnh sẽ chỉ được quản trị viên xem để xét duyệt và sẽ bị xóa sau khi xử lý.
+          </div>
+          <p class="small text-muted mb-3">
+            Vui lòng tải lên ảnh chụp giấy tờ tùy thân hoặc ảnh chân dung rõ mặt để chúng tôi xác minh bạn là chủ tài khoản.
+          </p>
+          <input type="file" id="verificationPhotoInput" accept="image/*" hidden>
+          <button type="button" class="btn btn-outline-primary w-100 py-3" id="verificationPhotoBtn">
+            <i class="bi bi-camera me-1"></i>Chọn ảnh xác minh
+          </button>
+          <div id="verificationPhotoPreview" class="mt-2 text-center" hidden>
+            <img id="verificationPhotoPreviewImg" alt="Xem trước ảnh xác minh" class="img-fluid rounded" style="max-height:200px">
+          </div>
+          <div class="progress mt-2" style="height:4px;display:none" id="verificationProgressWrap">
+            <div class="progress-bar" id="verificationProgress" style="width:0%"></div>
+          </div>
+          <p class="text-danger small mt-2 mb-0" id="verificationError" hidden></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-primary" id="verificationSubmitBtn" disabled>
+            <span id="verificationSubmitText">Gửi yêu cầu</span>
+            <span id="verificationSubmitSpinner" class="spinner-border spinner-border-sm ms-1" style="display:none"></span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

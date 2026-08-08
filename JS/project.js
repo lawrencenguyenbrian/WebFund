@@ -203,8 +203,38 @@ function renderProject(p) {
   document.getElementById('payoutPaidNote').hidden = !(p.payoutStatus === 'paid');
 
   // Creator
-  document.getElementById('creatorName').textContent = p.userName || 'Ẩn danh';
-  document.getElementById('creatorAvatar').textContent = (p.userName || 'A')[0].toUpperCase();
+  const creatorNameEl = document.getElementById('creatorName');
+  creatorNameEl.textContent = p.userName || 'Ẩn danh';
+  const creatorAvatar = document.getElementById('creatorAvatar');
+  creatorAvatar.textContent = (p.userName || 'A')[0].toUpperCase();
+  const creatorBio = document.getElementById('creatorBio');
+  if (creatorBio) creatorBio.hidden = true;
+
+  if (p.userId) {
+    db.collection('users').doc(p.userId).get()
+      .then(doc => {
+        if (!doc.exists) return;
+        const u = doc.data();
+        if (u.verified) {
+          const badge = document.createElement('i');
+          badge.className = 'bi bi-patch-check-fill text-primary ms-1';
+          badge.title = 'Đã xác minh';
+          creatorNameEl.appendChild(badge);
+        }
+        if (u.avatarUrl) {
+          creatorAvatar.textContent = '';
+          const img = document.createElement('img');
+          img.src = u.avatarUrl;
+          img.alt = p.userName || 'Ảnh đại diện';
+          creatorAvatar.appendChild(img);
+        }
+        if (u.bio && creatorBio) {
+          creatorBio.textContent = u.bio;
+          creatorBio.hidden = false;
+        }
+      })
+      .catch(() => {});
+  }
 
   // Contact
   if (p.email) {

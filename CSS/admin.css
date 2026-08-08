@@ -21,6 +21,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 [data-bs-theme="dark"] .btn-outline-secondary { border-color: #2a3155; color: #c8cde0; }
 [data-bs-theme="dark"] .btn-outline-secondary:hover { background: #2a3155; border-color: #4a5580; color: #fff; }
 [data-bs-theme="dark"] .dropdown-menu { background-color: #1e2440; border-color: #2a3155; }
+.dropdown-menu .dropdown-item i.bi { min-width: 1.2em; text-align: center; }
 [data-bs-theme="dark"] .dropdown-item { color: #c8cde0; }
 [data-bs-theme="dark"] .dropdown-item:hover { background-color: #2a3155; color: #fff; }
 
@@ -113,6 +114,23 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 }
 [data-bs-theme="light"] .admin-table-card .table-hover tbody tr:hover {
   background-color: rgba(13, 110, 253, .03);
+}
+
+/* ── Verification Thumbnail ── */
+.verification-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: zoom-in;
+  border: 1px solid #2a3155;
+  transition: opacity .15s;
+}
+.verification-thumb:hover {
+  opacity: .8;
+}
+[data-bs-theme="light"] .verification-thumb {
+  border-color: #dce1ea;
 }
 
 /* ── Error Toast ── */
