@@ -133,6 +133,27 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   border-color: #dce1ea;
 }
 
+/* ── Profile Avatar (verification modal) ── */
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(13, 110, 253, .15);
+  color: var(--bs-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 /* ── Error Toast ── */
 .error-toast {
   position: fixed;

@@ -307,11 +307,50 @@
 
   <div class="error-toast" id="errorToast"></div>
 
+  <!-- Verification profile modal -->
+  <div class="modal fade" id="verificationProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Hồ sơ tài khoản</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="profile-avatar" id="vpAvatar">?</div>
+            <div>
+              <div class="fw-bold fs-5" id="vpName">—</div>
+              <div class="small text-muted" id="vpEmail">—</div>
+            </div>
+          </div>
+          <dl class="row mb-0 small">
+            <dt class="col-4 text-muted fw-normal">Vai trò</dt>
+            <dd class="col-8"><span id="vpRole" class="badge bg-secondary">—</span></dd>
+            <dt class="col-4 text-muted fw-normal">Giới thiệu</dt>
+            <dd class="col-8" id="vpBio">—</dd>
+            <dt class="col-4 text-muted fw-normal">Địa điểm</dt>
+            <dd class="col-8" id="vpLocation">—</dd>
+            <dt class="col-4 text-muted fw-normal">Website</dt>
+            <dd class="col-8" id="vpWebsite">—</dd>
+            <dt class="col-4 text-muted fw-normal">Mạng xã hội</dt>
+            <dd class="col-8" id="vpSocial">—</dd>
+            <dt class="col-4 text-muted fw-normal">Tham gia từ</dt>
+            <dd class="col-8" id="vpJoined">—</dd>
+            <dt class="col-4 text-muted fw-normal">Mã người dùng</dt>
+            <dd class="col-8"><code id="vpUid" class="text-break">—</code></dd>
+          </dl>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Photo lightbox modal -->
   <div class="modal fade" id="verificationPhotoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content bg-transparent border-0 position-relative">
-        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Đóng"></button>
         <div class="modal-body p-0 text-center">
           <img id="verificationPhotoFull" src="" alt="Ảnh xác minh" class="img-fluid rounded" style="max-height:80vh">
         </div>
