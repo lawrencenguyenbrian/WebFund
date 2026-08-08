@@ -193,7 +193,7 @@ function renderProjectList(projects) {
           ${canRequestFeature ? `<button class="btn btn-sm btn-outline-info request-feature-btn" data-id="${p.id}" data-name="${p.name}" data-email="${p.email || ''}" title="Làm nổi bật dự án"><i class="bi bi-star"></i></button>` : ''}
           ${deleting
             ? `<button class="btn btn-sm btn-outline-secondary cancel-delete-btn" data-id="${p.id}" title="Hủy yêu cầu xóa"><i class="bi bi-x-lg"></i></button>`
-            : `<button class="btn btn-sm btn-outline-danger delete-btn" data-id="${p.id}" data-name="${p.name}" title="Yêu cầu xóa"><i class="bi bi-trash"></i></button>`}
+            : `<button class="btn btn-sm btn-outline-danger delete-btn" data-id="${p.id}" data-name="${p.name}" title="${p.payoutStatus === 'paid' ? 'Xóa dự án ngay' : 'Yêu cầu xóa'}"><i class="bi bi-trash"></i></button>`}
         </div>
       </div>
     `;
@@ -225,14 +225,36 @@ function renderProjectList(projects) {
 }
 
 async function requestDelete(projectId, projectName, btn) {
-  if (!confirm(`Bạn có chắc muốn yêu cầu xóa "${projectName}"?\nYêu cầu sẽ phải được quản trị viên duyệt trước khi dự án bị xóa.`)) return;
+  const user = firebase.auth().currentUser;
+  let canDeleteDirect = false;
+  try {
+    const snap = await db.collection('projects').doc(projectId).get();
+    canDeleteDirect = snap.exists && snap.data().payoutStatus === 'paid';
+  } catch (e) {}
+
+  const msg = canDeleteDirect
+    ? `Bạn có chắc muốn xóa "${projectName}"?\nDự án đã rút vốn nên sẽ được xóa ngay (vẫn lưu nhật ký cho an toàn).`
+    : `Bạn có chắc muốn yêu cầu xóa "${projectName}"?\nYêu cầu sẽ phải được quản trị viên duyệt trước khi dự án bị xóa.`;
+  if (!confirm(msg)) return;
   btn.disabled = true;
   try {
-    await db.collection('projects').doc(projectId).update({
-      deleteRequested: firebase.firestore.FieldValue.serverTimestamp(),
-      deleteRequestedBy: firebase.auth().currentUser.uid
-    });
-    showToast('Đã gửi yêu cầu xóa, chờ quản trị viên duyệt');
+    if (canDeleteDirect) {
+      const snap = await db.collection('projects').doc(projectId).get();
+      await db.collection('deletedProjects').doc(projectId).set({
+        ...snap.data(),
+        deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        deletedBy: user.uid,
+        deletedByEmail: user.email || ''
+      });
+      await db.collection('projects').doc(projectId).delete();
+      showToast('Đã xóa dự án (đã lưu nhật ký)');
+    } else {
+      await db.collection('projects').doc(projectId).update({
+        deleteRequested: firebase.firestore.FieldValue.serverTimestamp(),
+        deleteRequestedBy: user.uid
+      });
+      showToast('Đã gửi yêu cầu xóa, chờ quản trị viên duyệt');
+    }
     setTimeout(() => location.reload(), 800);
   } catch (err) {
     btn.disabled = false;
