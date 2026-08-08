@@ -90,7 +90,11 @@ service cloud.firestore {
     //   Admins may change status, adjust raised (on pledge confirmation),
     //   confirm payout (payoutStatus/feeAmount), approve feature listings
     //   (featured/featuredUntil), or clear a delete request (reject).
-    // Delete: admins only — removal first copies the doc to deletedProjects.
+    // Delete: admins only, OR the owner of a project that has already been
+    //   paid out (payoutStatus == 'paid') — after Rút vốn the founder may
+    //   remove their own project without approval. The removal still copies
+    //   the doc to deletedProjects first (audit log), enforced in the
+    //   deletedProjects rule below.
     match /projects/{projectId} {
       allow read: if resource.data.status == 'approved'
         || (signedIn() && resource.data.userId == request.auth.uid)
@@ -116,7 +120,13 @@ service cloud.firestore {
           && fieldOrNull(request.resource.data, 'featuredUntil') == fieldOrNull(resource.data, 'featuredUntil')
         )
       );
-      allow delete: if signedIn() && isAdmin();
+      allow delete: if signedIn() && (
+        isAdmin()
+        || (
+          resource.data.userId == request.auth.uid
+          && resource.data.payoutStatus == 'paid'
+        )
+      );
 
       // Founder posts progress updates — owner writes only; readable by the
       // same audience as the parent project.
@@ -130,10 +140,25 @@ service cloud.firestore {
     }
 
     // ── deletedProjects (internal audit log) ──
-    // Admin-only read, write, and delete. Not user-facing; keeps removals
-    // traceable and reversible (admin restore re-creates the project doc).
+    // Read/write/delete: admin-only. Keeps removals traceable and reversible
+    // (admin restore re-creates the project doc). One extra, narrow exception:
+    // the OWNER of a project that is paid out (payoutStatus == 'paid') may
+    // CREATE an audit copy of their own project — this is what enables the
+    // "delete without approval after Rút vốn" flow. It is create-only: they
+    // can never overwrite or delete an existing audit record, and the source
+    // project must be theirs and already paid.
     match /deletedProjects/{projectId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        || (
+          signedIn()
+          && get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid
+          && get(/databases/$(database)/documents/projects/$(projectId)).data.payoutStatus == 'paid'
+          && request.resource.data.deletedBy == request.auth.uid
+          && request.resource.data.payoutStatus == 'paid'
+        );
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
     // ── pledges ──

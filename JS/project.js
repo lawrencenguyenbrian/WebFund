@@ -371,14 +371,31 @@ function checkOwner(uid) {
 
 async function requestProjectDeletion() {
   if (!currentProject || currentProject.deleteRequested) return;
-  if (!confirm(`Bạn có chắc muốn yêu cầu xóa "${currentProject.name}"?\nYêu cầu sẽ phải được quản trị viên duyệt trước khi dự án bị xóa.`)) return;
+  const user = firebase.auth().currentUser;
+  const canDeleteDirect = currentProject.payoutStatus === 'paid';
+  const msg = canDeleteDirect
+    ? `Bạn có chắc muốn xóa "${currentProject.name}"?\nDự án đã rút vốn nên sẽ được xóa ngay (vẫn lưu nhật ký cho an toàn).`
+    : `Bạn có chắc muốn yêu cầu xóa "${currentProject.name}"?\nYêu cầu sẽ phải được quản trị viên duyệt trước khi dự án bị xóa.`;
+  if (!confirm(msg)) return;
 
   try {
-    await db.collection('projects').doc(currentProject.id).update({
-      deleteRequested: firebase.firestore.FieldValue.serverTimestamp(),
-      deleteRequestedBy: firebase.auth().currentUser.uid
-    });
-    alert('Đã gửi yêu cầu xóa, chờ quản trị viên duyệt.');
+    if (canDeleteDirect) {
+      const { id, ...rest } = currentProject;
+      await db.collection('deletedProjects').doc(currentProject.id).set({
+        ...rest,
+        deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        deletedBy: user.uid,
+        deletedByEmail: user.email || ''
+      });
+      await db.collection('projects').doc(currentProject.id).delete();
+      alert('Đã xóa dự án (đã lưu nhật ký).');
+    } else {
+      await db.collection('projects').doc(currentProject.id).update({
+        deleteRequested: firebase.firestore.FieldValue.serverTimestamp(),
+        deleteRequestedBy: user.uid
+      });
+      alert('Đã gửi yêu cầu xóa, chờ quản trị viên duyệt.');
+    }
     location.reload();
   } catch (err) {
     alert('Lỗi: ' + err.message);
