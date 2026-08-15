@@ -44,7 +44,33 @@ document.addEventListener('DOMContentLoaded', () => {
   initFormSubmit();
   initPostAnother();
   initAiHelper();
+  initMoneyInput(document.getElementById('pGoal'));
 });
+
+function formatMoneyInput(raw) {
+  const digits = String(raw == null ? '' : raw).replace(/\D/g, '');
+  if (!digits) return '';
+  return Number(digits).toLocaleString('en-US').replace(/,/g, '.');
+}
+
+function parseMoneyInput(value) {
+  return parseInt(String(value || '').replace(/\./g, ''), 10);
+}
+
+function initMoneyInput(el) {
+  if (!el) return;
+  el.addEventListener('input', () => {
+    const caret = el.selectionStart || 0;
+    const digitsBefore = el.value.slice(0, caret).replace(/\D/g, '').length;
+    el.value = formatMoneyInput(el.value);
+    let pos = 0, seen = 0;
+    while (pos < el.value.length && seen < digitsBefore) {
+      if (/\d/.test(el.value[pos])) seen++;
+      pos++;
+    }
+    el.setSelectionRange(pos, pos);
+  });
+}
 
 /* ── Auth UI ── */
 function initAuthUI() {
@@ -169,7 +195,7 @@ function validateStep(step) {
   }
 
   if (step === 3) {
-    const goal = parseInt(document.getElementById('pGoal').value);
+    const goal = parseMoneyInput(document.getElementById('pGoal').value);
     if (!goal || goal < 1000000) { showErr(err, 'Mục tiêu gọi vốn phải lớn hơn 1.000.000đ'); return false; }
     const daysLeft = parseInt(document.getElementById('pDaysLeft').value);
     if (daysLeft && (daysLeft < 1 || daysLeft > 90)) { showErr(err, 'Số ngày còn lại phải từ 1 đến 90'); return false; }
@@ -545,7 +571,7 @@ function initPerkTiers() {
     row.dataset.id = tier && tier.id ? tier.id : generatePerkTierId();
     row.innerHTML = `
       <div class="d-flex gap-2 mb-2 align-items-center">
-        <input type="number" class="form-control form-control-sm" placeholder="Mức ủng hộ tối thiểu (đ)" style="flex:1" min="0" value="${tier && tier.minAmount ? tier.minAmount : ''}">
+        <input type="text" inputmode="numeric" class="form-control form-control-sm" placeholder="Mức ủng hộ tối thiểu (đ)" style="flex:1" value="${formatMoneyInput(tier && tier.minAmount || '')}">
         <input type="text" class="form-control form-control-sm" placeholder="Tên đặc quyền" style="flex:2" value="${escapeAttr(tier && tier.title || '')}">
         <button type="button" class="btn btn-sm btn-outline-danger border-0 perk-remove" title="Xóa"><i class="bi bi-x-lg"></i></button>
       </div>
@@ -553,6 +579,7 @@ function initPerkTiers() {
       <input type="number" class="form-control form-control-sm" placeholder="Thời hạn (tháng, để trống nếu không giới hạn thời gian)" min="0" value="${tier && tier.durationMonths ? tier.durationMonths : ''}">
     `;
     row.querySelector('.perk-remove').addEventListener('click', () => row.remove());
+    initMoneyInput(row.querySelector('input'));
     container.appendChild(row);
   }
 
@@ -583,7 +610,7 @@ function getPerkTiers() {
   rows.forEach(row => {
     row.dataset.id = row.dataset.id || generatePerkTierId();
     const inputs = row.querySelectorAll('input');
-    const minAmount = parseInt(inputs[0].value);
+    const minAmount = parseMoneyInput(inputs[0].value);
     const title = inputs[1].value.trim();
     let durationMonths = inputs[2].value ? parseInt(inputs[2].value) : null;
     if (durationMonths && durationMonths < 1) durationMonths = null;
@@ -654,7 +681,7 @@ function fillForm(p) {
   updateGalleryGrid();
 
   // Step 3
-  document.getElementById('pGoal').value = p.goal || '';
+  document.getElementById('pGoal').value = formatMoneyInput(p.goal || '');
   document.getElementById('pDaysLeft').value = p.daysLeft || 30;
   document.getElementById('pUseOfFunds').value = p.useOfFunds || '';
   setProjectMilestones(p.milestones || []);
@@ -693,8 +720,7 @@ function escapeAttr(str) {
 
 /* ── AI Pitch Helper ── */
 let aiSuggestion = null;
-const AI_FIELD_LIMITS = { pName: 100, pTagline: 150, pDesc: 2000 };
-const AI_FIELD_KEYS = { pName: 'name', pTagline: 'tagline', pDesc: 'desc' };
+const AI_FIELD_LIMITS = { pDesc: 2000 };
 
 function initAiHelper() {
   const btn = document.getElementById('aiSuggestBtn');
@@ -734,10 +760,9 @@ function initAiHelper() {
     card.querySelectorAll('.ai-apply-btn').forEach(applyBtn => {
       applyBtn.addEventListener('click', () => {
         const field = applyBtn.dataset.target;
-        const key = AI_FIELD_KEYS[field];
         const input = document.getElementById(field);
-        if (!input || !aiSuggestion || !aiSuggestion[key]) return;
-        input.value = aiSuggestion[key].slice(0, AI_FIELD_LIMITS[field]);
+        if (!input || !aiSuggestion || !aiSuggestion.desc) return;
+        input.value = aiSuggestion.desc.slice(0, AI_FIELD_LIMITS[field]);
         updateCharCounters();
         showToast('Đã áp dụng gợi ý', 'success');
       });
@@ -751,12 +776,9 @@ async function generatePitchSuggestion(roughIdea) {
     throw new Error('Chưa cấu hình Gemini API key. Vui lòng copy JS/config.local.example.js thành JS/config.local.js và điền key của bạn.');
   }
 
-  const prompt = `Bạn là chuyên gia pitch startup gọi vốn. Dựa trên ý tưởng của nhà sáng lập dưới đây, hãy tạo một bài pitch tiếng Việt hoàn chỉnh gồm 3 trường:
-- name: tên dự án ngắn gọn, ấn tượng (tối đa 100 ký tự)
-- tagline: mô tả ngắn hấp dẫn (tối đa 150 ký tự)
-- desc: bài giới thiệu pitch chi tiết, giọng điệu startup (tối đa 2000 ký tự)
+  const prompt = `Bạn là chuyên gia pitch startup gọi vốn. Dựa trên ý tưởng của nhà sáng lập dưới đây, hãy tạo một mô tả chi tiết (desc) bằng tiếng Việt, giọng điệu startup (tối đa 2000 ký tự).
 
-Trả về DUY NHẤT một object JSON hợp lệ với đúng 3 trường name, tagline, desc.
+Trả về DUY NHẤT một object JSON hợp lệ với đúng 1 trường desc.
 Không dùng markdown, không bọc trong \`\`\`json, không thêm lời mở đầu hay giải thích. Chỉ trả về JSON thuần.
 
 Ý tưởng của nhà sáng lập:
@@ -794,8 +816,6 @@ Không dùng markdown, không bọc trong \`\`\`json, không thêm lời mở đ
   }
 
   return {
-    name: String(parsed.name || '').trim(),
-    tagline: String(parsed.tagline || '').trim(),
     desc: String(parsed.desc || '').trim()
   };
 }
@@ -808,8 +828,6 @@ function stripJsonFences(text) {
 }
 
 function renderAiSuggestions(suggestion) {
-  document.getElementById('aiName').textContent = suggestion.name || '—';
-  document.getElementById('aiTagline').textContent = suggestion.tagline || '—';
   document.getElementById('aiDesc').textContent = suggestion.desc || '—';
   const card = document.getElementById('aiSuggestionCard');
   card.hidden = false;
@@ -841,7 +859,7 @@ function initFormSubmit() {
     const desc = document.getElementById('pDesc').value.trim();
     const category = document.getElementById('pCategory').value;
     const stage = document.getElementById('pStage').value;
-    const goal = parseInt(document.getElementById('pGoal').value);
+    const goal = parseMoneyInput(document.getElementById('pGoal').value);
     const daysLeft = Math.min(Math.max(parseInt(document.getElementById('pDaysLeft').value) || 30, 1), 90);
     const url = document.getElementById('pUrl').value.trim();
     const email = document.getElementById('pEmail').value.trim();

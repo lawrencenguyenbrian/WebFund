@@ -61,7 +61,7 @@ function initAuth() {
     const password = document.getElementById('loginPassword').value;
     try {
       await firebase.auth().signInWithEmailAndPassword(email, password);
-      window.location.href = 'main.html';
+      // onAuthStateChanged handles redirect via checkUserRedirect()
     } catch (err) {
       showErr(loginErr, mapAuthError(err.code));
     }

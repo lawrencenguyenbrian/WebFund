@@ -10,7 +10,33 @@ document.addEventListener('DOMContentLoaded', () => {
   initMethodToggle();
   initFormSubmit();
   initPerkUI();
+  initMoneyInput(document.getElementById('pledgeAmount'));
 });
+
+function formatMoneyInput(raw) {
+  const digits = String(raw == null ? '' : raw).replace(/\D/g, '');
+  if (!digits) return '';
+  return Number(digits).toLocaleString('en-US').replace(/,/g, '.');
+}
+
+function parseMoneyInput(value) {
+  return parseInt(String(value || '').replace(/\./g, ''), 10);
+}
+
+function initMoneyInput(el) {
+  if (!el) return;
+  el.addEventListener('input', () => {
+    const caret = el.selectionStart || 0;
+    const digitsBefore = el.value.slice(0, caret).replace(/\D/g, '').length;
+    el.value = formatMoneyInput(el.value);
+    let pos = 0, seen = 0;
+    while (pos < el.value.length && seen < digitsBefore) {
+      if (/\d/.test(el.value[pos])) seen++;
+      pos++;
+    }
+    el.setSelectionRange(pos, pos);
+  });
+}
 
 function initAuthUI() {
   const userMenu = document.getElementById('userMenu');
@@ -160,7 +186,7 @@ function updatePerkPreview() {
   empty.hidden = true;
 
   const amountInput = document.getElementById('pledgeAmount');
-  const amount = parseInt(amountInput.value);
+  const amount = parseMoneyInput(amountInput.value);
 
   if (!wantsPerk) return;
 
@@ -226,7 +252,7 @@ function initFormSubmit() {
     const user = firebase.auth().currentUser;
     if (!user) { showErr(err, 'Vui lòng đăng nhập'); return; }
 
-    const amount = parseInt(document.getElementById('pledgeAmount').value);
+    const amount = parseMoneyInput(document.getElementById('pledgeAmount').value);
     const methodRadio = document.querySelector('input[name="pledgeMethod"]:checked');
     const method = methodRadio ? methodRadio.value : 'bank_transfer';
     const note = document.getElementById('pledgeNote').value.trim();

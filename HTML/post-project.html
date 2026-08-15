@@ -94,7 +94,7 @@
                   <label class="form-label small fw-semibold">Ý tưởng sơ bộ</label>
                   <textarea class="form-control" id="pIdeaRough" rows="3" placeholder="VD: App giúp sinh viên tìm phòng trọ nhanh, xem ảnh thực tế 360 và đánh giá từ người thuê trước đó..."></textarea>
                   <div class="d-flex align-items-center justify-content-between gap-2 mt-2 flex-wrap">
-                    <small class="text-muted">Gợi ý tên, mô tả ngắn và bài giới thiệu từ ý tưởng của bạn.</small>
+                    <small class="text-muted">Gợi ý mô tả chi tiết cho dự án từ ý tưởng của bạn.</small>
                     <button type="button" class="btn btn-outline-primary btn-sm" id="aiSuggestBtn">
                       <i class="bi bi-stars ai-btn-icon"></i> Gợi ý bằng AI
                     </button>
@@ -108,20 +108,6 @@
                     <span class="text-muted small ms-auto">Nhấn "Áp dụng" để chọn từng gợi ý</span>
                   </div>
                   <div class="d-flex flex-column gap-2">
-                    <div class="ai-suggestion-row">
-                      <div class="flex-grow-1">
-                        <div class="small fw-semibold text-muted">Tên dự án</div>
-                        <div class="ai-suggestion-text" id="aiName"></div>
-                      </div>
-                      <button type="button" class="btn btn-sm btn-primary ai-apply-btn" data-target="pName">Áp dụng</button>
-                    </div>
-                    <div class="ai-suggestion-row">
-                      <div class="flex-grow-1">
-                        <div class="small fw-semibold text-muted">Mô tả ngắn</div>
-                        <div class="ai-suggestion-text" id="aiTagline"></div>
-                      </div>
-                      <button type="button" class="btn btn-sm btn-primary ai-apply-btn" data-target="pTagline">Áp dụng</button>
-                    </div>
                     <div class="ai-suggestion-row">
                       <div class="flex-grow-1">
                         <div class="small fw-semibold text-muted">Mô tả chi tiết</div>
@@ -235,7 +221,7 @@
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label small fw-semibold">Mục tiêu gọi vốn (VNĐ) <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="pGoal" min="1000000" step="100000" required placeholder="VD: 50000000">
+                    <input type="text" class="form-control" id="pGoal" inputmode="numeric" required placeholder="VD: 50.000.000">
                     <small class="text-muted">Tối thiểu 1.000.000đ</small>
                   </div>
 

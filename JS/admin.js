@@ -102,7 +102,7 @@ function loadPledges() {
         return;
       }
       allPledges = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      allPledges.sort((a, b) => (b.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+      allPledges.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       loadVerifiedUsers();
       renderPledges();
     })
@@ -433,7 +433,7 @@ function loadPendingProjects() {
         return;
       }
       allPendingProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      allPendingProjects.sort((a, b) => (b.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+      allPendingProjects.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       renderPendingProjects();
     })
     .catch(() => {
