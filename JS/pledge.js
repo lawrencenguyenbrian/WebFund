@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function formatMoneyInput(raw) {
   const digits = String(raw == null ? '' : raw).replace(/\D/g, '');
   if (!digits) return '';
-  return Number(digits).toLocaleString('en-US').replace(/,/g, '.');
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 function parseMoneyInput(value) {

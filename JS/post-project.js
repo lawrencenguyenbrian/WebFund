@@ -22,6 +22,9 @@ let editingProjectId = null;
 let editingProject = null;
 let handleCoverFile = null;
 
+const DRAFT_KEY = 'webfund_post_draft';
+const isEditFromUrl = !!new URLSearchParams(window.location.search).get('edit');
+
 const CHAR_LIMITS = [
   ['pName', 'nameCount', 100],
   ['pTagline', 'taglineCount', 150],
@@ -45,12 +48,144 @@ document.addEventListener('DOMContentLoaded', () => {
   initPostAnother();
   initAiHelper();
   initMoneyInput(document.getElementById('pGoal'));
+  initDraft();
 });
+
+/* ── Draft Auto-Save ── */
+function collectDraft() {
+  const milestones = [];
+  document.querySelectorAll('#milestones .milestone-row').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    milestones.push({ title: inputs[0].value, date: inputs[1].value });
+  });
+
+  const perkTiers = [];
+  document.querySelectorAll('#perkTiers .perk-row').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    perkTiers.push({
+      minAmount: inputs[0].value,
+      perkTitle: inputs[1].value,
+      description: row.querySelector('textarea').value,
+      durationMonths: inputs[2].value
+    });
+  });
+
+  const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const checked = id => { const el = document.getElementById(id); return el ? el.checked : false; };
+
+  return {
+    step: currentStep,
+    pIdeaRough: val('pIdeaRough'),
+    pName: val('pName'),
+    pTagline: val('pTagline'),
+    pDesc: val('pDesc'),
+    pCategory: val('pCategory'),
+    pStage: val('pStage'),
+    tags: typeof getProjectTags === 'function' ? getProjectTags() : [],
+    coverImageUrl,
+    galleryUrls: [...galleryUrls],
+    pGoal: val('pGoal'),
+    pDaysLeft: val('pDaysLeft'),
+    pUseOfFunds: val('pUseOfFunds'),
+    milestones,
+    perkTiers,
+    stratCrowdfund: checked('stratCrowdfund'),
+    stratSkill: checked('stratSkill'),
+    pUrl: val('pUrl'),
+    pEmail: val('pEmail'),
+    pTeam: val('pTeam'),
+    pFacebook: val('pFacebook'),
+    pLinkedin: val('pLinkedin'),
+    pTwitter: val('pTwitter'),
+    pGithub: val('pGithub')
+  };
+}
+
+function saveDraft() {
+  if (isEditFromUrl) return;
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(collectDraft())); } catch (e) {}
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
+
+function restoreDraft() {
+  if (isEditFromUrl) return false;
+  let draft = null;
+  try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch (e) { return false; }
+  if (!draft) return false;
+
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  set('pIdeaRough', draft.pIdeaRough);
+  set('pName', draft.pName);
+  set('pTagline', draft.pTagline);
+  set('pDesc', draft.pDesc);
+  set('pCategory', draft.pCategory);
+  set('pStage', draft.pStage);
+  set('pGoal', draft.pGoal);
+  set('pDaysLeft', draft.pDaysLeft);
+  set('pUseOfFunds', draft.pUseOfFunds);
+  set('pUrl', draft.pUrl);
+  set('pEmail', draft.pEmail);
+  set('pTeam', draft.pTeam);
+  set('pFacebook', draft.pFacebook);
+  set('pLinkedin', draft.pLinkedin);
+  set('pTwitter', draft.pTwitter);
+  set('pGithub', draft.pGithub);
+
+  if (Array.isArray(draft.tags) && typeof setProjectTags === 'function') setProjectTags(draft.tags);
+
+  if (draft.coverImageUrl) {
+    coverImageUrl = draft.coverImageUrl;
+    setCoverPreview(coverImageUrl);
+  }
+  if (Array.isArray(draft.galleryUrls)) {
+    galleryUrls = draft.galleryUrls.slice();
+    document.getElementById('pGalleryUrls').value = galleryUrls.join(',');
+    updateGalleryGrid();
+  }
+
+  if (Array.isArray(draft.milestones) && typeof setProjectMilestones === 'function') {
+    setProjectMilestones(draft.milestones);
+  }
+  if (Array.isArray(draft.perkTiers) && typeof setProjectPerkTiers === 'function') {
+    setProjectPerkTiers(draft.perkTiers.map(t => ({
+      minAmount: parseMoneyInput(t.minAmount || '') || '',
+      title: t.perkTitle || '',
+      description: t.description || '',
+      durationMonths: t.durationMonths || ''
+    })));
+  }
+
+  const cb = (id, on) => { const el = document.getElementById(id); if (el && on != null) el.checked = !!on; };
+  cb('stratCrowdfund', draft.stratCrowdfund);
+  cb('stratSkill', draft.stratSkill);
+
+  updateCharCounters();
+
+  const step = Math.min(Math.max(parseInt(draft.step, 10) || 1, 1), 4);
+  goToStep(step);
+  return true;
+}
+
+function initDraft() {
+  const card = document.getElementById('formCard');
+  if (!card) return;
+
+  if (restoreDraft()) {
+    showToast('Đã khôi phục bản nháp của bạn');
+  }
+
+  ['input', 'change', 'click'].forEach(evt => {
+    card.addEventListener(evt, saveDraft);
+  });
+}
 
 function formatMoneyInput(raw) {
   const digits = String(raw == null ? '' : raw).replace(/\D/g, '');
   if (!digits) return '';
-  return Number(digits).toLocaleString('en-US').replace(/,/g, '.');
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 function parseMoneyInput(value) {
@@ -589,10 +724,12 @@ function initPerkTiers() {
     addPerkRow(null);
   });
 
-  container.querySelectorAll('.perk-remove').forEach(btn => {
-    btn.addEventListener('click', () => {
+  container.querySelectorAll('.perk-row').forEach(row => {
+    initMoneyInput(row.querySelector('input'));
+    const removeBtn = row.querySelector('.perk-remove');
+    if (removeBtn) removeBtn.addEventListener('click', () => {
       if (container.querySelectorAll('.perk-row').length > 1) {
-        btn.closest('.perk-row').remove();
+        row.remove();
       }
     });
   });
@@ -931,6 +1068,7 @@ function initFormSubmit() {
       document.getElementById('successState').hidden = false;
       document.getElementById('stepNav').style.display = 'none';
       document.getElementById('navButtons').style.display = 'none';
+      clearDraft();
     } catch (e) {
       console.error('Lưu dự án thất bại:', e);
       showErr(err, 'Không thể đăng dự án, vui lòng thử lại');
@@ -946,6 +1084,7 @@ function initPostAnother() {
   const btn = document.getElementById('postAnotherBtn');
   if (!btn) return;
   btn.addEventListener('click', () => {
+    clearDraft();
     document.getElementById('projectForm').reset();
     coverImageUrl = '';
     galleryUrls = [];
