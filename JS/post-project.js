@@ -105,6 +105,8 @@ function collectDraft() {
 
 function saveDraft() {
   if (isEditFromUrl) return;
+  const success = document.getElementById('successState');
+  if (success && !success.hidden) return;
   try { localStorage.setItem(DRAFT_KEY, JSON.stringify(collectDraft())); } catch (e) {}
 }
 
@@ -1140,7 +1142,8 @@ function initFormSubmit() {
 function initPostAnother() {
   const btn = document.getElementById('postAnotherBtn');
   if (!btn) return;
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
     clearDraft();
     document.getElementById('projectForm').reset();
     coverImageUrl = '';
