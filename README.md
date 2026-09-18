@@ -9,7 +9,7 @@ All UI text is in Vietnamese (`vi`).
 ## Features
 
 - **Project feed** — browse approved projects, filter by category/stage, sort by trending / ending soon / newest. Paid *featured* listings sort to the top with a ⭐ badge.
-- **Project creation** — multi-step form with cover image & gallery (Cloudinary upload), milestones, team, strategies, and a **Gemini-powered AI Pitch Helper** that drafts your name/tagline/description (review-before-apply).
+- **Project creation** — multi-step form with cover image & gallery (Cloudinary upload) and an inline lightbox preview, milestones with `dd/mm/yyyy` dates, team, strategies, and a **Gemini-powered AI Pitch Helper** that drafts your name/tagline/description (review-before-apply).
 - **Editing** — founders edit their own projects; status and funding are preserved.
 - **Pledging** — investors pledge a fixed amount or a skill. Pledges start `pending`; an admin confirms them after the bank transfer clears, which increments the project's `raised`.
 - **Admin console** (`admin.html`) — review projects, confirm/reject pledges, handle delete requests, approve payouts, approve featured listings, and view/restore deleted projects.
@@ -53,6 +53,7 @@ All UI text is in Vietnamese (`vi`).
 │   └── 404.html
 ├── JS/               # Page scripts (vanilla, DOMContentLoaded-driven)
 ├── CSS/              # Per-page styles
+├── PNG/              # Static assets (favicon: icon.png)
 ├── firestore.rules   # Security rules (authorization is enforced server-side)
 ├── firebase.json     # Hosting + Firestore rules config
 └── .firebaserc       # Firebase project id (default: web-fund-139cb)
@@ -141,7 +142,7 @@ npx firebase-tools serve --only hosting
 `name`, `email`, `role` (`founder` | `investor` | `admin`), `createdAt`, `verified` (admin-only), public profile: `bio`, `location`, `website`, `socialLinks` (`facebook`, `linkedin`), `avatarUrl` (Cloudinary, folder `webfund/avatars`)
 
 ### `projects/{projectId}`
-`userId`, `userName`, `name`, `tagline`, `desc`, `stage`, `category`, `tags`, `goal`, `raised`, `status` (`pending` | `approved` | `rejected`), `coverImage`, `gallery`, `milestones`, `team`, `useOfFunds`, `email`, `socialLinks`, `strategies` (`crowdfund` | `skill`), `perkTiers` (`{id, minAmount, title, description, durationMonths}` — `durationMonths: null` = non-expiring), `deadline` (Timestamp), `daysLeft` (static fallback for legacy projects), `createdAt`
+`userId`, `userName`, `name`, `tagline`, `desc`, `stage`, `category`, `tags`, `goal`, `raised`, `status` (`pending` | `approved` | `rejected`), `coverImage`, `gallery`, `milestones` (dates entered as `dd/mm/yyyy` and stored as `yyyy-mm-dd`), `team`, `useOfFunds`, `email`, `socialLinks`, `strategies` (`crowdfund` | `skill`), `perkTiers` (`{id, minAmount, title, description, durationMonths}` — `durationMonths: null` = non-expiring), `deadline` (Timestamp), `daysLeft` (static fallback for legacy projects), `createdAt`
 
 **Workflow fields (admin-controlled):**
 - `deleteRequested` / `deleteRequestedBy` — founder asks to delete; admin approves (doc moves to `deletedProjects`) or rejects (clears the fields)
