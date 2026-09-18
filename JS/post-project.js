@@ -21,6 +21,7 @@ let currentUserRole = null;
 let editingProjectId = null;
 let editingProject = null;
 let handleCoverFile = null;
+let lightboxIndex = 0;
 
 const DRAFT_KEY = 'webfund_post_draft';
 const isEditFromUrl = !!new URLSearchParams(window.location.search).get('edit');
@@ -44,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTags();
   initMilestones();
   initPerkTiers();
+  initLightbox();
   initFormSubmit();
   initPostAnother();
   initAiHelper();
@@ -56,7 +58,7 @@ function collectDraft() {
   const milestones = [];
   document.querySelectorAll('#milestones .milestone-row').forEach(row => {
     const inputs = row.querySelectorAll('input');
-    milestones.push({ title: inputs[0].value, date: inputs[1].value });
+    milestones.push({ title: inputs[0].value, date: toIsoDate(inputs[1].value) || '' });
   });
 
   const perkTiers = [];
@@ -334,6 +336,13 @@ function validateStep(step) {
     if (!goal || goal < 1000000) { showErr(err, 'Mục tiêu gọi vốn phải lớn hơn 1.000.000đ'); return false; }
     const daysLeft = parseInt(document.getElementById('pDaysLeft').value);
     if (daysLeft && (daysLeft < 1 || daysLeft > 90)) { showErr(err, 'Số ngày còn lại phải từ 1 đến 90'); return false; }
+
+    const invalidMilestone = Array.from(document.querySelectorAll('#milestones .milestone-row')).some(row => {
+      const dateEl = row.querySelectorAll('input')[1];
+      const v = dateEl.value.trim();
+      return v && !toIsoDate(v);
+    });
+    if (invalidMilestone) { showErr(err, 'Ngày cột mốc không hợp lệ (định dạng dd/mm/yyyy)'); return false; }
   }
 
   if (step === 4) {
@@ -453,13 +462,7 @@ function initCoverUpload() {
     // Show preview
     const reader = new FileReader();
     reader.onload = (e) => {
-      zone.innerHTML = `<img src="${e.target.result}" alt="Cover preview"><input type="file" id="coverInput" accept="image/*">`;
-      zone.classList.add('has-image');
-      // Re-bind input after replacing innerHTML
-      const newInput = zone.querySelector('input[type="file"]');
-      newInput.addEventListener('change', () => {
-        if (newInput.files[0]) handleCoverFile(newInput.files[0]);
-      });
+      renderCoverPreview(e.target.result);
     };
     reader.readAsDataURL(file);
 
@@ -497,12 +500,25 @@ function initCoverUpload() {
 }
 
 function setCoverPreview(url) {
+  renderCoverPreview(url);
+}
+
+function renderCoverPreview(src) {
   const zone = document.getElementById('coverUploadZone');
-  zone.innerHTML = `<img src="${url}" alt="Cover preview"><input type="file" id="coverInput" accept="image/*">`;
+  zone.innerHTML = `
+    <img src="${src}" alt="Cover preview">
+    <button type="button" class="preview-btn" title="Xem trước"><i class="bi bi-zoom-in"></i></button>
+    <input type="file" id="coverInput" accept="image/*">`;
   zone.classList.add('has-image');
-  const input = zone.querySelector('input[type="file"]');
-  input.addEventListener('change', () => {
-    if (input.files[0]) handleCoverFile(input.files[0]);
+  const previewBtn = zone.querySelector('.preview-btn');
+  previewBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof openPostLightbox === 'function') openPostLightbox(0);
+  });
+  const newInput = zone.querySelector('input[type="file"]');
+  newInput.addEventListener('change', () => {
+    if (newInput.files[0]) handleCoverFile(newInput.files[0]);
   });
 }
 
@@ -574,7 +590,12 @@ function updateGalleryGrid() {
     div.className = 'gallery-item';
     div.innerHTML = `
       <img src="${url}" alt="Gallery ${i + 1}">
+      <button type="button" class="preview-btn" data-index="${i}" title="Xem trước"><i class="bi bi-zoom-in"></i></button>
       <button type="button" class="remove-btn" data-index="${i}" title="Xóa"><i class="bi bi-x-lg"></i></button>`;
+    div.querySelector('.preview-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof openPostLightbox === 'function') openPostLightbox(i + 1);
+    });
     div.querySelector('.remove-btn').addEventListener('click', () => {
       galleryUrls.splice(i, 1);
       document.getElementById('pGalleryUrls').value = galleryUrls.join(',');
@@ -645,6 +666,36 @@ function initTags() {
   };
 }
 
+/* ── Date Helpers (dd/mm/yyyy) ── */
+function formatDateMask(raw) {
+  const digits = String(raw || '').replace(/\D/g, '').slice(0, 8);
+  if (!digits) return '';
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function bindDateMask(el) {
+  el.addEventListener('input', () => {
+    el.value = formatDateMask(el.value);
+  });
+}
+
+function toIsoDate(value) {
+  const m = String(value || '').trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const month = parseInt(m[2], 10);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+function toDisplayDate(iso) {
+  const m = String(iso || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return '';
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
 /* ── Milestones ── */
 function initMilestones() {
   const container = document.getElementById('milestones');
@@ -655,9 +706,10 @@ function initMilestones() {
     row.className = 'd-flex gap-2 mb-2 align-items-center milestone-row';
     row.innerHTML = `
       <input type="text" class="form-control form-control-sm" placeholder="Mô tả cột mốc" style="flex:2" value="${escapeAttr(title || '')}">
-      <input type="date" class="form-control form-control-sm" style="flex:1" value="${date || ''}">
+      <input type="text" class="form-control form-control-sm" style="flex:1" placeholder="dd/mm/yyyy" inputmode="numeric" value="${escapeAttr(toDisplayDate(date))}">
       <button type="button" class="btn btn-sm btn-outline-danger border-0 milestone-remove" title="Xóa"><i class="bi bi-x-lg"></i></button>`;
     row.querySelector('.milestone-remove').addEventListener('click', () => row.remove());
+    bindDateMask(row.querySelectorAll('input')[1]);
     container.appendChild(row);
   }
 
@@ -665,6 +717,11 @@ function initMilestones() {
     const count = container.querySelectorAll('.milestone-row').length;
     if (count >= 5) { showToast('Tối đa 5 cột mốc'); return; }
     addMilestoneRow('', '');
+  });
+
+  container.querySelectorAll('.milestone-row').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    if (inputs[1]) bindDateMask(inputs[1]);
   });
 
   container.querySelectorAll('.milestone-remove').forEach(btn => {
@@ -688,7 +745,7 @@ function getMilestones() {
   rows.forEach(row => {
     const inputs = row.querySelectorAll('input');
     const title = inputs[0].value.trim();
-    const date = inputs[1].value;
+    const date = toIsoDate(inputs[1].value);
     if (title) milestones.push({ title, date: date || null });
   });
   return milestones;
@@ -1117,6 +1174,59 @@ function initPostAnother() {
     // Re-init cover upload
     initCoverUpload();
   });
+}
+
+/* ── Lightbox Preview ── */
+function initLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  if (!lightbox) return;
+  const img = document.getElementById('lightboxImg');
+  const counter = document.getElementById('lightboxCounter');
+  const prevBtn = document.getElementById('lightboxPrev');
+  const nextBtn = document.getElementById('lightboxNext');
+
+  function urls() {
+    const coverImg = document.querySelector('#coverUploadZone img');
+    const cover = coverImg ? coverImg.getAttribute('src') || '' : coverImageUrl;
+    return [cover, ...galleryUrls].filter(Boolean);
+  }
+
+  function close() {
+    lightbox.hidden = true;
+    document.removeEventListener('keydown', onKey);
+  }
+
+  function show(index) {
+    const list = urls();
+    if (!list.length) return;
+    lightboxIndex = Math.min(Math.max(index || 0, 0), list.length - 1);
+    img.src = list[lightboxIndex] || '';
+    counter.textContent = list.length > 1 ? `${lightboxIndex + 1} / ${list.length}` : '';
+    prevBtn.hidden = list.length < 2;
+    nextBtn.hidden = list.length < 2;
+    lightbox.hidden = false;
+    document.addEventListener('keydown', onKey);
+  }
+
+  function go(dir) {
+    const list = urls();
+    if (list.length < 2) return;
+    lightboxIndex = (lightboxIndex + dir + list.length) % list.length;
+    show(lightboxIndex);
+  }
+
+  function onKey(e) {
+    if (e.key === 'ArrowLeft') go(-1);
+    else if (e.key === 'ArrowRight') go(1);
+    else if (e.key === 'Escape') close();
+  }
+
+  document.getElementById('lightboxClose').addEventListener('click', close);
+  prevBtn.addEventListener('click', () => go(-1));
+  nextBtn.addEventListener('click', () => go(1));
+  lightbox.addEventListener('click', (e) => { if (e.target === lightbox) close(); });
+
+  window.openPostLightbox = show;
 }
 
 /* ── Helpers ── */

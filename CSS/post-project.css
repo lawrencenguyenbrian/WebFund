@@ -524,3 +524,87 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   word-break: break-word;
   font-size: .9rem;
 }
+
+/* ── Preview Buttons ── */
+.upload-zone .preview-btn,
+.gallery-item .preview-btn {
+  position: absolute;
+  z-index: 2;
+  bottom: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, .65);
+  color: #fff;
+  font-size: .85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .2s ease, opacity .2s;
+}
+.upload-zone .preview-btn:hover,
+.gallery-item .preview-btn:hover {
+  background: rgba(0, 0, 0, .9);
+}
+.gallery-item .preview-btn {
+  opacity: 0;
+}
+.gallery-item:hover .preview-btn {
+  opacity: 1;
+}
+
+/* ── Lightbox ── */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, .92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.lightbox[hidden] { display: none; }
+.lightbox-img {
+  max-width: 92vw;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .6);
+}
+.lightbox-close,
+.lightbox-nav {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.lightbox-close:hover,
+.lightbox-nav:hover { background: rgba(255, 255, 255, .25); }
+.lightbox-close { position: absolute; top: 1.25rem; right: 1.25rem; }
+.lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); }
+.lightbox-prev { left: 1.25rem; }
+.lightbox-next { right: 1.25rem; }
+.lightbox-counter {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  background: rgba(255, 255, 255, .14);
+  padding: .3rem .85rem;
+  border-radius: 20px;
+  font-size: .85rem;
+  font-weight: 500;
+}
