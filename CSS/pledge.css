@@ -140,6 +140,29 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 [data-bs-theme="light"] .method-desc { color: #5a6178; }
 
 /* ── Perk Preview ── */
+.perk-tier-row {
+  border: 1px solid #2a3155;
+  border-radius: 10px;
+  padding: .7rem .9rem;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+[data-bs-theme="light"] .perk-tier-row {
+  border-color: #dce1ea;
+}
+.perk-tier-row.is-matched {
+  border-color: var(--bs-primary);
+  background: rgba(13, 110, 253, .1);
+}
+[data-bs-theme="light"] .perk-tier-row.is-matched {
+  background: rgba(13, 110, 253, .08);
+}
+.perk-tier-check {
+  color: var(--bs-primary);
+  margin-top: .3rem;
+  display: inline-flex;
+}
+.perk-tier-check[hidden] { display: none; }
+
 .perk-preview {
   border: 1px solid #2a3155;
   border-radius: 10px;

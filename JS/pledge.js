@@ -184,6 +184,7 @@ function renderPerkUI(p) {
   }
 
   perkSection.hidden = false;
+  renderPerkTierList(tiers);
   const checked = document.querySelector('input[name="perkChoice"]:checked');
   if (checked) {
     wantsPerk = checked.value === 'claim';
@@ -193,6 +194,22 @@ function renderPerkUI(p) {
     wantsPerk = true;
   }
   updatePerkPreview();
+}
+
+function renderPerkTierList(tiers) {
+  const container = document.getElementById('perkTierList');
+  if (!container) return;
+  container.innerHTML = tiers.map((t, i) => `
+    <div class="perk-tier-row" data-index="${i}">
+      <div class="d-flex justify-content-between align-items-baseline gap-2">
+        <span class="small fw-semibold">${t.title}</span>
+        <span class="small fw-semibold text-primary">${formatCurrency(t.minAmount)}</span>
+      </div>
+      ${t.description ? `<div class="small text-muted mt-1">${t.description}</div>` : ''}
+      ${t.durationMonths ? `<div class="small text-muted mt-1">Thời hạn: ${t.durationMonths} tháng</div>` : ''}
+      <span class="perk-tier-check small fw-semibold" hidden><i class="bi bi-check-circle-fill me-1"></i>Bạn sẽ nhận đặc quyền này</span>
+    </div>
+  `).join('');
 }
 
 function updatePerkPreview() {
@@ -206,7 +223,10 @@ function updatePerkPreview() {
   const amountInput = document.getElementById('pledgeAmount');
   const amount = parseMoneyInput(amountInput.value);
 
-  if (!wantsPerk) return;
+  if (!wantsPerk) {
+    updatePerkTierHighlight();
+    return;
+  }
 
   const tier = getPerkTier(amount);
   if (tier) {
@@ -228,6 +248,23 @@ function updatePerkPreview() {
       empty.textContent = `Ủng hộ thêm ${formatCurrency(next.minAmount - (amount || 0))} để nhận '${next.title}'`;
     }
   }
+  updatePerkTierHighlight();
+}
+
+function updatePerkTierHighlight() {
+  const rows = document.querySelectorAll('#perkTierList .perk-tier-row');
+  if (!rows.length) return;
+  const amount = parseMoneyInput(document.getElementById('pledgeAmount').value);
+  const tier = wantsPerk ? getPerkTier(amount) : null;
+  const tiers = (currentProject && currentProject.perkTiers) || [];
+  const matchedIndex = tiers.indexOf(tier);
+
+  rows.forEach(row => {
+    const isMatch = parseInt(row.dataset.index, 10) === matchedIndex;
+    row.classList.toggle('is-matched', isMatch);
+    const check = row.querySelector('.perk-tier-check');
+    if (check) check.hidden = !isMatch;
+  });
 }
 
 function initMethodToggle() {
