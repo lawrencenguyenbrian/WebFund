@@ -148,22 +148,41 @@ function initProjectFeed() {
       return matchCategory && matchStage;
     });
     const now = Date.now();
-    const featuredList = list.filter(p => p.featured && p.featuredUntil?.toDate() > new Date(now));
-    const normalList = list.filter(p => !(p.featured && p.featuredUntil?.toDate() > new Date(now)));
+    const isFeatured = (p) => p.featured && p.featuredUntil?.toDate && p.featuredUntil.toDate() > new Date(now);
+    const isFunded = (p) => p.raised >= p.goal;
     const sortList = (arr) => {
       if (state.sort === 'trending') arr.sort((a, b) => (b.raised / b.goal) - (a.raised / a.goal));
       else if (state.sort === 'ending') arr.sort((a, b) => getDaysLeft(a) - getDaysLeft(b));
       else if (state.sort === 'newest') arr.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     };
-    sortList(featuredList);
-    sortList(normalList);
-    list = featuredList.concat(normalList);
+    const activeFeatured = list.filter(p => !isFunded(p) && isFeatured(p));
+    const activeNormal = list.filter(p => !isFunded(p) && !isFeatured(p));
+    const fundedFeatured = list.filter(p => isFunded(p) && isFeatured(p));
+    const fundedNormal = list.filter(p => isFunded(p) && !isFeatured(p));
+    sortList(activeFeatured);
+    sortList(activeNormal);
+    sortList(fundedFeatured);
+    sortList(fundedNormal);
+    list = activeFeatured.concat(activeNormal, fundedFeatured, fundedNormal);
     grid.innerHTML = list.map(renderCard).join('');
     emptyState.hidden = list.length !== 0;
   };
 
   render();
 }
+
+const CATEGORY_LABELS = {
+  ecommerce: 'E-commerce',
+  edtech: 'EdTech',
+  fintech: 'FinTech',
+  ai: 'AI',
+  saas: 'SaaS',
+  content: 'Blog / Nội dung',
+  healthtech: 'HealthTech',
+  proptech: 'PropTech',
+  traveltech: 'TravelTech',
+  other: 'Khác'
+};
 
 function renderCard(p) {
   const pct = Math.min(Math.round((p.raised / p.goal) * 100), 100);
@@ -177,6 +196,7 @@ function renderCard(p) {
         ${p.coverImage ? `<img src="${p.coverImage}" class="card-img-top" alt="${p.name}">` : ''}
         <div class="card-body d-flex flex-column gap-2">
           <div class="d-flex align-items-center gap-1 mb-1 flex-wrap">
+            ${p.category ? `<span class="badge bg-primary bg-opacity-10 text-primary">${CATEGORY_LABELS[p.category] || p.category}</span>` : ''}
             ${(p.featured && p.featuredUntil?.toDate() > new Date()) ? '<span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Nổi bật</span>' : ''}
             <span class="badge ${stageClass}">${stageLabel}</span>
             ${(p.tags || []).filter(t => t !== stageLabel).slice(0, 3).map(t => `<span class="badge bg-light text-secondary border">${t}</span>`).join('')}
