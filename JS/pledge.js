@@ -206,7 +206,7 @@ function renderPerkTierList(tiers) {
         <span class="small fw-semibold text-primary">${formatCurrency(t.minAmount)}</span>
       </div>
       ${t.description ? `<div class="small text-muted mt-1">${t.description}</div>` : ''}
-      ${t.durationMonths ? `<div class="small text-muted mt-1">Thời hạn: ${t.durationMonths} tháng</div>` : ''}
+      ${t.durationMonths ? `<div class="small text-muted mt-1">Thời hạn: ${t.durationMonths} tháng</div>` : '<div class="small text-muted mt-1">Không thời hạn</div>'}
       <span class="perk-tier-check small fw-semibold" hidden><i class="bi bi-check-circle-fill me-1"></i>Bạn sẽ nhận đặc quyền này</span>
     </div>
   `).join('');
@@ -234,7 +234,7 @@ function updatePerkPreview() {
     matched.hidden = false;
     const duration = tier.durationMonths
       ? `<div class="small text-muted">Thời hạn: ${tier.durationMonths} tháng</div>`
-      : '';
+      : '<div class="small text-muted">Không thời hạn</div>';
     matched.innerHTML = `
       <div class="fw-semibold">${tier.title}</div>
       ${tier.description ? `<div class="small text-muted">${tier.description}</div>` : ''}

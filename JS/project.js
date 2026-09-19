@@ -232,10 +232,10 @@ function renderProject(p) {
           <div class="small fw-semibold">${t.title}</div>
           <span class="small fw-semibold text-primary">${formatCurrency(t.minAmount)}</span>
         </div>
-        ${t.description ? `<div class="small text-muted">${t.description}</div>` : ''}
-        ${t.durationMonths ? `<div class="small text-muted">Thời hạn: ${t.durationMonths} tháng</div>` : ''}
-      </div>
-    `).join('');
+${t.description ? `<div class="small text-muted">${t.description}</div>` : ''}
+      ${t.durationMonths ? `<div class="small text-muted">Thời hạn: ${t.durationMonths} tháng</div>` : '<div class="small text-muted">Không thời hạn</div>'}
+    </div>
+  `).join('');
   }
 
   // Team
