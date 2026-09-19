@@ -130,7 +130,37 @@ function renderProjectInfo(p) {
   document.getElementById('pledgeProjectPct').textContent = `${pct}% · ${formatCurrency(p.raised)} / ${formatCurrency(p.goal)}`;
 
   renderPerkUI(p);
+  updateMethodVisibility(p);
   updateOwnerVisibility();
+}
+
+function updateMethodVisibility(p) {
+  const methodBank = document.getElementById('methodBank');
+  const methodSkill = document.getElementById('methodSkill');
+  if (!methodBank || !methodSkill) return;
+
+  const strategies = p.strategies || [];
+  const allowCrowdfund = strategies.length === 0 || strategies.includes('crowdfund');
+  const allowSkill = strategies.length === 0 || strategies.includes('skill');
+
+  methodBank.hidden = !allowCrowdfund;
+  methodSkill.hidden = !allowSkill;
+
+  const bankInput = methodBank.querySelector('input');
+  const skillInput = methodSkill.querySelector('input');
+  const active = document.querySelector('input[name="pledgeMethod"]:checked');
+
+  if (active === skillInput && !allowSkill) {
+    if (allowCrowdfund) {
+      bankInput.checked = true;
+      applyMethod(false);
+    }
+  } else if (active === bankInput && !allowCrowdfund) {
+    if (allowSkill) {
+      skillInput.checked = true;
+      applyMethod(true);
+    }
+  }
 }
 
 function updateOwnerVisibility() {

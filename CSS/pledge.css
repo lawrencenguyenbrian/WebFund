@@ -118,6 +118,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   transition: all .2s ease;
   display: block;
 }
+.method-card[hidden] { display: none !important; }
 .method-card:hover {
   border-color: var(--bs-primary);
   background: rgba(13, 110, 253, .06);
