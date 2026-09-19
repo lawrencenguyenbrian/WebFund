@@ -39,6 +39,7 @@ function initAuthUI() {
       userMenu.style.display = 'block';
       userDropdown.textContent = user.displayName || user.email || 'User';
       createBtn.style.display = 'inline-block';
+      createBtn.textContent = '+ Dự án';
       createBtn.href = 'post-project.html';
       checkOwner(user.uid);
 
@@ -46,6 +47,8 @@ function initAuthUI() {
         currentUserRole = doc.exists ? doc.data().role : null;
         if (currentUserRole === 'admin') {
           createBtn.style.display = 'inline-block';
+          createBtn.textContent = 'Admin';
+          createBtn.href = 'admin.html';
           if (createProjectLink) createProjectLink.style.display = 'none';
           if (myProjectsLink) myProjectsLink.style.display = 'none';
           if (portfolioLink) portfolioLink.style.display = 'none';

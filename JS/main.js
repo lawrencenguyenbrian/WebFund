@@ -31,8 +31,9 @@ function initAuthUI() {
     authBtns.style.display = 'none';
     userMenu.style.display = 'block';
     userDropdown.textContent = user.displayName || 'User';
-    createBtn.style.display = 'inline-block';
-    createBtn.href = 'post-project.html';
+createBtn.style.display = 'inline-block';
+      createBtn.textContent = '+ Dự án';
+      createBtn.href = 'post-project.html';
 
     document.getElementById('heroProjectBtn').href = 'post-project.html';
     document.getElementById('ctaProjectBtn').href = 'post-project.html';
@@ -41,6 +42,8 @@ function initAuthUI() {
       currentUserRole = doc.exists ? doc.data().role : null;
       if (currentUserRole === 'admin') {
         createBtn.style.display = 'inline-block';
+        createBtn.textContent = 'Admin';
+        createBtn.href = 'admin.html';
         if (createProjectLink) createProjectLink.style.display = 'none';
         if (myProjectsLink) myProjectsLink.style.display = 'none';
         if (portfolioLink) portfolioLink.style.display = 'none';
