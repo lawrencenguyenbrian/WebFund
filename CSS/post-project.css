@@ -46,6 +46,9 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 [data-bs-theme="dark"] .navbar {
   background-color: #12172e !important;
 }
+[data-bs-theme="light"] .navbar {
+  background-color: #ffffff !important;
+}
 [data-bs-theme="dark"] .navbar .nav-link {
   color: #8892b0;
 }
@@ -253,6 +256,12 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   border-style: solid;
   border-color: #2a3155;
 }
+[data-bs-theme="light"] .upload-zone {
+  border-color: #dce1ea;
+}
+[data-bs-theme="light"] .upload-zone.has-image {
+  border-color: #dce1ea;
+}
 .upload-zone .upload-icon {
   font-size: 2rem;
   color: #4a5580;
@@ -295,6 +304,9 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   aspect-ratio: 1;
   border: 1px solid #2a3155;
 }
+[data-bs-theme="light"] .gallery-item {
+  border-color: #dce1ea;
+}
 .gallery-item img {
   width: 100%;
   height: 100%;
@@ -336,6 +348,9 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   font-size: .75rem;
   gap: .25rem;
 }
+[data-bs-theme="light"] .gallery-add {
+  border-color: #dce1ea;
+}
 .gallery-add:hover {
   border-color: var(--bs-primary);
   color: var(--bs-primary);
@@ -376,6 +391,9 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   overflow-y: auto;
   cursor: text;
   transition: border-color .2s;
+}
+[data-bs-theme="light"] .tag-container {
+  border-color: #dce1ea;
 }
 .tag-container:focus-within {
   border-color: var(--bs-primary);

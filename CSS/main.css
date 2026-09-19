@@ -62,6 +62,9 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 [data-bs-theme="dark"] .navbar {
   background-color: #12172e !important;
 }
+[data-bs-theme="light"] .navbar {
+  background-color: #ffffff !important;
+}
 [data-bs-theme="dark"] .navbar .nav-link {
   color: #8892b0;
 }
