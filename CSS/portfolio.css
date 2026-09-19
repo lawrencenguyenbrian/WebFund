@@ -112,6 +112,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   color: var(--bs-primary);
   white-space: nowrap;
 }
+#pledgeList[hidden] { display: none !important; }
 
 @media (max-width: 576px) {
   .pledge-row { flex-direction: column; align-items: flex-start; }

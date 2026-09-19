@@ -141,6 +141,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   padding: 2rem;
 }
 .lightbox[hidden] { display: none; }
+#ownerActions[hidden] { display: none !important; }
 .lightbox-img {
   max-width: 92vw;
   max-height: 88vh;

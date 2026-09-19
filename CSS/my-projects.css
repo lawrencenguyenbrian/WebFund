@@ -114,6 +114,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   gap: .5rem;
   align-items: flex-end;
 }
+#projectList[hidden] { display: none !important; }
 
 .project-row-update {
   background: #252c4a;
