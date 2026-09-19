@@ -157,6 +157,30 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 }
 
 /* ── Success State ── */
+.pledge-owner-card {
+  background: #1e2440;
+  border: 1px solid #2a3155;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+[data-bs-theme="light"] .pledge-owner-card {
+  background: #fff;
+  border-color: #dce1ea;
+}
+.pledge-owner-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(13, 110, 253, .15);
+  color: var(--bs-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
 .pledge-success-card {
   background: #1e2440;
   border: 1px solid #2a3155;

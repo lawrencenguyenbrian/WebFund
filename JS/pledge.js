@@ -1,5 +1,6 @@
 const db = firebase.firestore();
 let currentProject = null;
+let currentUser = null;
 let wantsPerk = false;
 let selectedPerkTier = null;
 let projectListener = null;
@@ -49,9 +50,11 @@ function initAuthUI() {
   const logoutBtn = document.getElementById('logoutBtn');
 
   firebase.auth().onAuthStateChanged((user) => {
+    currentUser = user;
     if (user) {
       userMenu.style.display = 'block';
       userDropdown.textContent = user.displayName || user.email || 'User';
+      updateOwnerVisibility();
 
       db.collection('users').doc(user.uid).get().then(doc => {
         const role = doc.exists ? doc.data().role : null;
@@ -127,6 +130,17 @@ function renderProjectInfo(p) {
   document.getElementById('pledgeProjectPct').textContent = `${pct}% · ${formatCurrency(p.raised)} / ${formatCurrency(p.goal)}`;
 
   renderPerkUI(p);
+  updateOwnerVisibility();
+}
+
+function updateOwnerVisibility() {
+  if (!currentProject) return;
+  const ownerNotice = document.getElementById('ownerNotice');
+  const formCard = document.getElementById('pledgeFormCard');
+  if (!ownerNotice || !formCard) return;
+  const isOwner = !!currentUser && currentProject.userId === currentUser.uid;
+  ownerNotice.hidden = !isOwner;
+  formCard.hidden = isOwner;
 }
 
 /* ── Perk Tiers ── */

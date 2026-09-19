@@ -157,6 +157,7 @@ function initLightbox() {
 function renderProject(p) {
   const isOwner = currentUser && p.userId === currentUser.uid;
   const isAdmin = currentUserRole === 'admin';
+  document.getElementById('ownerActions').hidden = true;
   if (p.status !== 'approved' && !isOwner && !isAdmin) {
     showNotFound();
     return;
