@@ -1,6 +1,7 @@
 const db = firebase.firestore();
 let cachedProjects = [];
 let currentUserRole = null;
+let projectsListener = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
@@ -76,14 +77,14 @@ function initAuthUI() {
 }
 
 function loadProjects() {
-  return db.collection('projects').where('status', '==', 'approved').get()
-    .then(snapshot => {
+  if (projectsListener) return;
+  projectsListener = db.collection('projects').where('status', '==', 'approved')
+    .onSnapshot(snapshot => {
       cachedProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       cachedProjects.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       render();
       updateHeroStats();
-    })
-    .catch(() => {
+    }, () => {
       cachedProjects = [];
       render();
       updateHeroStats();

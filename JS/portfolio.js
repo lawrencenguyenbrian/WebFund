@@ -1,4 +1,5 @@
 const db = firebase.firestore();
+let portfolioListener = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
@@ -48,19 +49,22 @@ function initAuthUI() {
 }
 
 function loadPortfolio(uid) {
-  db.collection('pledges').where('userId', '==', uid).get()
-    .then(snapshot => {
+  if (portfolioListener) return;
+  portfolioListener = db.collection('pledges').where('userId', '==', uid)
+    .onSnapshot(snapshot => {
       document.getElementById('loadingState').hidden = true;
+      const emptyState = document.getElementById('emptyState');
+      const container = document.getElementById('pledgeList');
       if (snapshot.empty) {
-        document.getElementById('emptyState').hidden = false;
+        container.hidden = true;
+        emptyState.hidden = false;
         return;
       }
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       renderStats(list);
       renderPledgeList(list);
-    })
-    .catch(() => {
+    }, () => {
       document.getElementById('loadingState').hidden = true;
       document.getElementById('emptyState').hidden = false;
     });

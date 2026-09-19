@@ -3,6 +3,7 @@ const db = firebase.firestore();
 const PLATFORM_FEE_PCT = 0.05;
 const FEATURED_PRICE = 200000;
 const FEATURED_DAYS = 7;
+let myProjectsListener = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
@@ -94,18 +95,21 @@ function initAuthUI() {
 }
 
 function loadMyProjects(uid) {
-  db.collection('projects').where('userId', '==', uid).get()
-    .then(snapshot => {
+  if (myProjectsListener) return;
+  myProjectsListener = db.collection('projects').where('userId', '==', uid)
+    .onSnapshot(snapshot => {
       document.getElementById('loadingState').hidden = true;
+      const emptyState = document.getElementById('emptyState');
+      const container = document.getElementById('projectList');
       if (snapshot.empty) {
-        document.getElementById('emptyState').hidden = false;
+        container.hidden = true;
+        emptyState.hidden = false;
         return;
       }
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       renderProjectList(list);
-    })
-    .catch(() => {
+    }, () => {
       document.getElementById('loadingState').hidden = true;
       document.getElementById('emptyState').hidden = false;
     });

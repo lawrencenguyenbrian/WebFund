@@ -5,6 +5,7 @@ let currentUserRole = null;
 let countdownTimer = null;
 let lightboxImages = [];
 let lightboxIndex = 0;
+let projectListener = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
@@ -85,17 +86,17 @@ function loadProject() {
     showNotFound();
     return;
   }
+  if (projectListener) return;
 
-  db.collection('projects').doc(id).get()
-    .then(doc => {
+  projectListener = db.collection('projects').doc(id)
+    .onSnapshot(doc => {
       if (!doc.exists) {
         showNotFound();
         return;
       }
       currentProject = { id: doc.id, ...doc.data() };
       renderProject(currentProject);
-    })
-    .catch(() => showNotFound());
+    }, () => showNotFound());
 }
 
 function showNotFound() {

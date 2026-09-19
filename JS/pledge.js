@@ -2,6 +2,7 @@ const db = firebase.firestore();
 let currentProject = null;
 let wantsPerk = false;
 let selectedPerkTier = null;
+let projectListener = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
@@ -87,9 +88,13 @@ function loadProject() {
     document.getElementById('notFoundState').hidden = false;
     return;
   }
+  if (projectListener) return;
 
-  db.collection('projects').doc(id).get()
-    .then(doc => {
+  projectListener = db.collection('projects').doc(id)
+    .onSnapshot(doc => {
+      const successEl = document.getElementById('pledgeSuccess');
+      if (successEl && !successEl.hidden) return;
+
       if (!doc.exists) {
         document.getElementById('loadingState').hidden = true;
         document.getElementById('notFoundState').hidden = false;
@@ -97,8 +102,7 @@ function loadProject() {
       }
       currentProject = { id: doc.id, ...doc.data() };
       renderProjectInfo(currentProject);
-    })
-    .catch(() => {
+    }, () => {
       document.getElementById('loadingState').hidden = true;
       document.getElementById('notFoundState').hidden = false;
     });

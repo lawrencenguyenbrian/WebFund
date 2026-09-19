@@ -5,6 +5,13 @@ let allVerificationRequests = [];
 let verificationProfiles = {};
 let verifiedUserIds = new Set();
 let currentFilter = 'all';
+let pledgesListener = null;
+let pendingProjectsListener = null;
+let verificationListener = null;
+let deleteRequestsListener = null;
+let deletedListener = null;
+let payoutListener = null;
+let featuredListener = null;
 
 const PLATFORM_FEE_PCT = 0.05;
 const FEATURED_DAYS = 7;
@@ -95,20 +102,20 @@ function checkAdmin(uid) {
 }
 
 function loadPledges() {
-  db.collection('pledges').get()
-    .then(snapshot => {
-      if (snapshot.empty) {
-        document.getElementById('emptyPledges').hidden = false;
-        return;
-      }
-      allPledges = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      allPledges.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      loadVerifiedUsers();
-      renderPledges();
-    })
-    .catch(() => {
+  if (pledgesListener) return;
+  pledgesListener = db.collection('pledges').onSnapshot(snapshot => {
+    allPledges = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    allPledges.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    if (!allPledges.length) {
+      document.getElementById('pledgeTable').hidden = true;
       document.getElementById('emptyPledges').hidden = false;
-    });
+      return;
+    }
+    loadVerifiedUsers();
+  }, () => {
+    document.getElementById('pledgeTable').hidden = true;
+    document.getElementById('emptyPledges').hidden = false;
+  });
 }
 
 function loadVerifiedUsers() {
@@ -264,21 +271,24 @@ function formatCurrency(n) {
 }
 
 function loadVerificationRequests() {
-  db.collection('verificationRequests').where('status', '==', 'pending').get()
-    .then(snapshot => {
-      if (snapshot.empty) {
+  if (verificationListener) return;
+  verificationListener = db.collection('verificationRequests').where('status', '==', 'pending')
+    .onSnapshot(snapshot => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      list.sort((a, b) => (b.submittedAt?.seconds || 0) - (a.submittedAt?.seconds || 0));
+      allVerificationRequests = list;
+      if (!list.length) {
+        document.getElementById('verificationTable').hidden = true;
         document.getElementById('emptyVerification').hidden = false;
         return;
       }
-      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      list.sort((a, b) => (b.submittedAt?.seconds || 0) - (a.submittedAt?.seconds || 0));
-      return Promise.all(list.map(r =>
+      Promise.all(list.map(r =>
         db.collection('users').doc(r.userId).get()
           .then(doc => { verificationProfiles[r.userId] = doc.exists ? doc.data() : null; })
           .catch(() => { verificationProfiles[r.userId] = null; })
       )).then(() => renderVerificationRequests(list));
-    })
-    .catch(() => {
+    }, () => {
+      document.getElementById('verificationTable').hidden = true;
       document.getElementById('emptyVerification').hidden = false;
     });
 }
@@ -426,17 +436,14 @@ async function rejectVerification(uid, btn) {
 }
 
 function loadPendingProjects() {
-  db.collection('projects').where('status', '==', 'pending').get()
-    .then(snapshot => {
-      if (snapshot.empty) {
-        document.getElementById('emptyProjects').hidden = false;
-        return;
-      }
+  if (pendingProjectsListener) return;
+  pendingProjectsListener = db.collection('projects').where('status', '==', 'pending')
+    .onSnapshot(snapshot => {
       allPendingProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       allPendingProjects.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       renderPendingProjects();
-    })
-    .catch(() => {
+    }, () => {
+      document.getElementById('projectTable').hidden = true;
       document.getElementById('emptyProjects').hidden = false;
     });
 }
@@ -507,17 +514,19 @@ async function rejectProject(id, btn) {
 }
 
 function loadDeleteRequests() {
-  db.collection('projects').where('deleteRequested', '!=', null).get()
-    .then(snapshot => {
-      if (snapshot.empty) {
+  if (deleteRequestsListener) return;
+  deleteRequestsListener = db.collection('projects').where('deleteRequested', '!=', null)
+    .onSnapshot(snapshot => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      list.sort((a, b) => (b.deleteRequested?.seconds || 0) - (a.deleteRequested?.seconds || 0));
+      if (!list.length) {
+        document.getElementById('deleteRequestTable').hidden = true;
         document.getElementById('emptyDeleteRequests').hidden = false;
         return;
       }
-      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      list.sort((a, b) => (b.deleteRequested?.seconds || 0) - (a.deleteRequested?.seconds || 0));
       renderDeleteRequests(list);
-    })
-    .catch(() => {
+    }, () => {
+      document.getElementById('deleteRequestTable').hidden = true;
       document.getElementById('emptyDeleteRequests').hidden = false;
     });
 }
@@ -596,22 +605,20 @@ async function rejectDelete(id, btn) {
 }
 
 function loadPayoutRequests() {
-  db.collection('projects').where('payoutRequestedAt', '!=', null).get()
-    .then(snapshot => {
-      if (snapshot.empty) {
-        document.getElementById('emptyPayoutRequests').hidden = false;
-        return;
-      }
+  if (payoutListener) return;
+  payoutListener = db.collection('projects').where('payoutRequestedAt', '!=', null)
+    .onSnapshot(snapshot => {
       let list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       list = list.filter(p => p.payoutStatus !== 'paid');
       if (!list.length) {
+        document.getElementById('payoutTable').hidden = true;
         document.getElementById('emptyPayoutRequests').hidden = false;
         return;
       }
       list.sort((a, b) => (b.payoutRequestedAt?.seconds || 0) - (a.payoutRequestedAt?.seconds || 0));
       renderPayoutRequests(list);
-    })
-    .catch(() => {
+    }, () => {
+      document.getElementById('payoutTable').hidden = true;
       document.getElementById('emptyPayoutRequests').hidden = false;
     });
 }
@@ -668,22 +675,20 @@ async function confirmPayout(id, btn) {
 }
 
 function loadFeaturedRequests() {
-  db.collection('projects').where('featuredRequested', '!=', null).get()
-    .then(snapshot => {
-      if (snapshot.empty) {
-        document.getElementById('emptyFeaturedRequests').hidden = false;
-        return;
-      }
+  if (featuredListener) return;
+  featuredListener = db.collection('projects').where('featuredRequested', '!=', null)
+    .onSnapshot(snapshot => {
       let list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       list = list.filter(p => !p.featured);
       if (!list.length) {
+        document.getElementById('featuredRequestTable').hidden = true;
         document.getElementById('emptyFeaturedRequests').hidden = false;
         return;
       }
       list.sort((a, b) => (b.featuredRequested?.seconds || 0) - (a.featuredRequested?.seconds || 0));
       renderFeaturedRequests(list);
-    })
-    .catch(() => {
+    }, () => {
+      document.getElementById('featuredRequestTable').hidden = true;
       document.getElementById('emptyFeaturedRequests').hidden = false;
     });
 }
@@ -752,17 +757,19 @@ async function rejectFeature(id, btn) {
 }
 
 function loadDeletedProjects() {
-  db.collection('deletedProjects').get()
-    .then(snapshot => {
-      if (snapshot.empty) {
+  if (deletedListener) return;
+  deletedListener = db.collection('deletedProjects')
+    .onSnapshot(snapshot => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      list.sort((a, b) => (b.deletedAt?.seconds || 0) - (a.deletedAt?.seconds || 0));
+      if (!list.length) {
+        document.getElementById('deletedTable').hidden = true;
         document.getElementById('emptyDeleted').hidden = false;
         return;
       }
-      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      list.sort((a, b) => (b.deletedAt?.seconds || 0) - (a.deletedAt?.seconds || 0));
       renderDeletedProjects(list);
-    })
-    .catch(() => {
+    }, () => {
+      document.getElementById('deletedTable').hidden = true;
       document.getElementById('emptyDeleted').hidden = false;
     });
 }
