@@ -301,7 +301,7 @@ function renderVerificationRequests(list) {
   document.getElementById('verificationTableBody').innerHTML = list.map(r => {
     const submitted = r.submittedAt?.toDate ? r.submittedAt.toDate().toLocaleString('vi-VN') : '';
     const profile = verificationProfiles[r.userId] || {};
-    const roleLabel = profile.role === 'investor' ? 'Nhà đầu tư' : profile.role === 'admin' ? 'Admin' : 'Founder';
+    const roleLabel = profile.role === 'investor' ? 'Người ủng hộ' : profile.role === 'admin' ? 'Admin' : 'Founder';
     return `
       <tr>
         <td>
@@ -350,7 +350,7 @@ function viewVerificationProfile(uid) {
 
   const roleMap = {
     founder: { label: 'Founder', cls: 'bg-primary' },
-    investor: { label: 'Nhà đầu tư', cls: 'bg-primary' },
+    investor: { label: 'Người ủng hộ', cls: 'bg-primary' },
     admin: { label: 'Admin', cls: 'bg-danger' }
   };
   const role = roleMap[p.role] || { label: '—', cls: 'bg-secondary' };

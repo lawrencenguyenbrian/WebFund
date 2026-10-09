@@ -93,7 +93,7 @@ function renderAccountInfo() {
 
   const roleMap = {
     founder: { label: 'Founder', icon: 'bi-rocket-takeoff', desc: 'Đăng dự án, gọi vốn, quản lý tiến độ' },
-    investor: { label: 'Nhà đầu tư', icon: 'bi-cash-coin', desc: 'Cam kết góp vốn, theo dõi danh mục' },
+    investor: { label: 'Người ủng hộ', icon: 'bi-cash-coin', desc: 'Ủng hộ dự án, theo dõi danh mục' },
     admin: { label: 'Admin', icon: 'bi-shield-lock', desc: 'Quản trị viên hệ thống' }
   };
   const role = roleMap[userData.role] || roleMap.founder;

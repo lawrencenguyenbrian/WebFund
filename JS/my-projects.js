@@ -304,7 +304,7 @@ async function openBackersModal(projectId, projectName) {
     const backers = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     if (!backers.length) {
-      body.innerHTML = '<p class="text-muted text-center mb-0">Chưa có nhà đầu tư nào ủng hộ dự án này.</p>';
+      body.innerHTML = '<p class="text-muted text-center mb-0">Chưa có người ủng hộ nào cho dự án này.</p>';
       return;
     }
 

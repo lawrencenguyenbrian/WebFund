@@ -344,7 +344,7 @@ function initFormSubmit() {
     const skill = document.getElementById('pledgeSkill').value.trim();
 
     if (method === 'bank_transfer' && (!amount || amount < 100000)) {
-      showErr(err, 'Số tiền cam kết phải lớn hơn 100.000đ');
+      showErr(err, 'Số tiền ủng hộ phải lớn hơn 100.000đ');
       return;
     }
 
@@ -394,11 +394,11 @@ function initFormSubmit() {
         document.getElementById('bankTransferAmount').textContent = formatCurrency(amount);
       }
 
-      document.title = `Cam kết thành công — WebFund`;
+      document.title = `Ủng hộ thành công — WebFund`;
     } catch (e) {
-      showErr(err, 'Không thể xử lý cam kết, vui lòng thử lại');
+      showErr(err, 'Không thể xử lý ủng hộ, vui lòng thử lại');
       submitBtn.disabled = false;
-      submitText.textContent = 'Xác nhận cam kết';
+      submitText.textContent = 'Xác nhận ủng hộ';
       submitSpinner.style.display = 'none';
     }
   });
